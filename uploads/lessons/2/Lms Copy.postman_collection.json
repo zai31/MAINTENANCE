@@ -1,0 +1,253 @@
+{
+	"info": {
+		"_postman_id": "bc5cdf31-bbef-45c9-94e3-990d658ca6c1",
+		"name": "Lms Copy",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "29989936"
+	},
+	"item": [
+		{
+			"name": "Test",
+			"item": [
+				{
+					"name": "Available Courses",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiI3Iiwicm9sZSI6IklOU1RSVUNUT1IiLCJpYXQiOjE3MzM4NDk2MzgsImV4cCI6MTczMzkzNjAzOH0.IonqaBPvMa9ustzf8Ab9pQCQHvX-16HkCrypw7uUmJs",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:8080/api/courses/available",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"courses",
+								"available"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Students",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiI3Iiwicm9sZSI6IklOU1RSVUNUT1IiLCJpYXQiOjE3MzM4NjY3NzIsImV4cCI6MTczMzk1MzE3Mn0.daKUgNzOlp5Ey9xl68jLXqzGAP06og74qqUejmICZ-o",
+								"type": "text"
+							},
+							{
+								"key": "",
+								"value": "",
+								"type": "text",
+								"disabled": true
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"username\": \"Mariam\",\r\n  \"password\": \"SecurePassword123\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8080/api/courses/1/enrolled-students",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"courses",
+								"1",
+								"enrolled-students"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Add Lesson",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiI3Iiwicm9sZSI6IklOU1RSVUNUT1IiLCJpYXQiOjE3MzM4NDk2MzgsImV4cCI6MTczMzkzNjAzOH0.IonqaBPvMa9ustzf8Ab9pQCQHvX-16HkCrypw7uUmJs",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"title\": \"Lesson 1\",\r\n  \"content\": \"This is the content of the first lesson.\"\r\n}\r\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8080/api/courses/1/addLesson",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"courses",
+								"1",
+								"addLesson"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Upload Media File",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiI3Iiwicm9sZSI6IklOU1RSVUNUT1IiLCJpYXQiOjE3MzM4NDk2MzgsImV4cCI6MTczMzkzNjAzOH0.IonqaBPvMa9ustzf8Ab9pQCQHvX-16HkCrypw7uUmJs",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "file",
+									"type": "file",
+									"src": "/C:/Users/10/Documents/Assigment1Qgis.qgz"
+								}
+							]
+						},
+						"url": {
+							"raw": "http://localhost:8080/api/courses/1/uploadMedia",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"courses",
+								"1",
+								"uploadMedia"
+							],
+							"query": [
+								{
+									"key": "file",
+									"value": null,
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Enroll Student in Course",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiI3Iiwicm9sZSI6IklOU1RSVUNUT1IiLCJpYXQiOjE3MzM4NDk2MzgsImV4cCI6MTczMzkzNjAzOH0.IonqaBPvMa9ustzf8Ab9pQCQHvX-16HkCrypw7uUmJs",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:8080/api/courses/1/enroll",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"courses",
+								"1",
+								"enroll"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Course",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiI3Iiwicm9sZSI6IklOU1RSVUNUT1IiLCJpYXQiOjE3MzM4NDk2MzgsImV4cCI6MTczMzkzNjAzOH0.IonqaBPvMa9ustzf8Ab9pQCQHvX-16HkCrypw7uUmJs",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"title\": \"Sample Course\",\r\n    \"description\": \"This is a sample course description.\",\r\n    \"duration\": \"10 hours\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8080/api/courses/create",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"courses",
+								"create"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"description": "Test Course Managment"
+		}
+	]
+}

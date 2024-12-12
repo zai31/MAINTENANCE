@@ -1,5 +1,6 @@
 package com.app.LMS.config;
 
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import org.springframework.beans.factory.annotation.Value;
@@ -47,15 +48,29 @@ public class JwtConfig {
     }
 
     public Long getUserIdFromToken(String token) {
-        return Long.valueOf(Jwts.parserBuilder()
-                .setSigningKey(getSigningKey())
-                .build()
-                .parseClaimsJws(token)
-                .getBody()
-                .getSubject());
+        try {
+            // Trim whitespace and remove the "Bearer " prefix if it exists
+            token = token.trim();
+            if (token.startsWith("Bearer ")) {
+                token = token.substring(7).trim();
+            }
+            return Long.valueOf(Jwts.parserBuilder()
+                    .setSigningKey(getSigningKey())
+                    .build()
+                    .parseClaimsJws(token)
+                    .getBody()
+                    .getSubject());
+        } catch (JwtException e) {
+            throw new RuntimeException("Invalid or expired token", e);
+        }
     }
 
     public String getRoleFromToken(String token) {
+        // Trim whitespace and remove the "Bearer " prefix if it exists
+        token = token.trim();
+        if (token.startsWith("Bearer ")) {
+            token = token.substring(7).trim();
+        }
         return Jwts.parserBuilder()
                 .setSigningKey(getSigningKey())
                 .build()
