@@ -1,9 +1,11 @@
 package com.app.LMS.courseManagement.model;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import com.app.LMS.userManagement.model.User;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -30,10 +32,8 @@ public class Course {
     @ManyToOne
     private User instructor;
 
-    @OneToMany(mappedBy = "course")
-    private List<Lesson> lessons;
-
-    // Getters and setters
+@OneToMany(mappedBy = "course", cascade = CascadeType.ALL, orphanRemoval = true)
+private List<Lesson> lessons = new ArrayList<>();
 
     public Long getId() {
         return id;
