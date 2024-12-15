@@ -23,7 +23,7 @@ public class MediaService {
 
     // Method to upload file for an existing course
     public String uploadFile(Long lessonId, MultipartFile file) {
-        // Retrieve the course by ID
+        // Retrieve the lesson by ID
         Lesson lesson = lessonRepository.findById(lessonId).orElse(null);
         if (lesson == null) {
             return "Lesson not found";
@@ -32,26 +32,28 @@ public class MediaService {
         // Set the upload directory
         String uploadDir = System.getProperty("user.dir") + "/uploads/lessons/" + lesson.getId();
         File directory = new File(uploadDir);
-        if (!directory.exists()) {
-            directory.mkdirs();  // Ensure the directory exists
+        if (!directory.exists() && !directory.mkdirs()) {
+            return "Failed to create upload directory";
         }
 
         try {
             // Save the file to the directory
             Path filePath = Paths.get(uploadDir, file.getOriginalFilename());
-            file.transferTo(filePath);
+            System.out.println("File will be uploaded to: " + filePath.toString()); // Debugging
+            file.transferTo(filePath.toFile()); // Ensure compatibility
 
-            // Add the file path to the course's mediaPaths
+            // Add the file path to the lesson's mediaPaths
             if (lesson.getMediaPaths() == null) {
-                lesson.setMediaPaths(new ArrayList<>());  // Initialize the list if it's null
+                lesson.setMediaPaths(new ArrayList<>()); // Initialize if null
             }
             lesson.getMediaPaths().add(filePath.toString());
 
-            // Save the course with the new media path
+            // Save the lesson with the new media path
             lessonRepository.save(lesson);
 
             return "File uploaded successfully";
         } catch (IOException e) {
+            e.printStackTrace();
             return "Error uploading file: " + e.getMessage();
         }
     }

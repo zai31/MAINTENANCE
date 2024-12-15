@@ -10,6 +10,9 @@ import com.app.LMS.courseManagement.repository.LessonRepository;
 import com.app.LMS.userManagement.repository.UserRepository;
 import org.springframework.stereotype.Service;
 
+import com.app.LMS.DTO.LessonContentDTO;
+import com.app.LMS.DTO.CourseContentDTO;
+
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -97,4 +100,39 @@ public class CourseService {
                 .collect(Collectors.toList());
     }
 
+    public CourseContentDTO mapToCourseDTO(Course course) {
+        CourseContentDTO dto = new CourseContentDTO();
+        dto.setId(course.getId());
+        dto.setTitle(course.getTitle());
+        dto.setDescription(course.getDescription());
+        dto.setDuration(course.getDuration());
+        dto.setLessons(
+                course.getLessons().stream()
+                        .map(this::mapToLessonDTO)
+                        .collect(Collectors.toList())
+        );
+        return dto;
+    }
+
+    private LessonContentDTO mapToLessonDTO(Lesson lesson) {
+        LessonContentDTO dto = new LessonContentDTO();
+        dto.setId(lesson.getId());
+        dto.setTitle(lesson.getTitle());
+        dto.setContent(lesson.getContent());
+        dto.setMediaPaths(lesson.getMediaPaths());
+        return dto;
+    }
+
+
+    public CourseContentDTO getCourseById(Long id) {
+        Course course = courseRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Course not found with ID: " + id));
+
+        return mapToCourseDTO(course);
+    }
+
+    public LessonContentDTO getLesson(Long id){
+        Lesson lesson = lessonRepository.findById(id).orElseThrow(() -> new RuntimeException("Lesson not found with ID: " + id));
+        return mapToLessonDTO(lesson);
+    }
 }

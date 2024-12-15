@@ -1,6 +1,7 @@
 package com.app.LMS.courseManagement.controller;
 import java.util.List;
 
+import com.app.LMS.DTO.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -15,9 +16,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.app.LMS.DTO.CourseRequest;
-import com.app.LMS.DTO.Courseresponse;
-import com.app.LMS.DTO.LessonRequest;
 import com.app.LMS.config.JwtConfig;
 import com.app.LMS.courseManagement.model.Course;
 import com.app.LMS.courseManagement.model.Lesson;
@@ -26,7 +24,6 @@ import com.app.LMS.courseManagement.repository.LessonRepository;
 import com.app.LMS.courseManagement.service.CourseService;
 import com.app.LMS.courseManagement.service.MediaService;
 import com.app.LMS.userManagement.repository.UserRepository;
-
 import jakarta.validation.Valid;
 
 
@@ -399,4 +396,17 @@ public ResponseEntity<String> deleteLesson(
                     .body("Error fetching enrolled students: " + e.getMessage());
         }
     }
+
+    @GetMapping("/{id}/content")
+    public ResponseEntity<CourseContentDTO> getContent(@PathVariable Long id) {
+        CourseContentDTO course = courseService.getCourseById(id);
+        return ResponseEntity.ok(course);
+    }
+
+    @GetMapping("/lesson/{id}/content")
+    public ResponseEntity<LessonContentDTO> getLessonContent(@PathVariable Long id) {
+        LessonContentDTO lesson = courseService.getLesson(id);
+        return ResponseEntity.ok(lesson);
+    }
+
 }
