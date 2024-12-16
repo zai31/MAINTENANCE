@@ -82,8 +82,10 @@ private List<Lesson> lessons = new ArrayList<>();
     public void setLessons(List<Lesson> lessons) {
         this.lessons = lessons;
     }
+
+   /*
     public void setInstructor(MediaFile orElseThrow) {
         throw new UnsupportedOperationException("Not supported yet.");
-    }
+    }*/
 
 }
