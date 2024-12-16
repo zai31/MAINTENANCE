@@ -15,7 +15,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 public class QuizBankService {
@@ -38,8 +37,9 @@ public class QuizBankService {
         return new ResponseEntity<>("Quiz Bank created successfully", HttpStatus.CREATED);
     }
 
-    public ResponseEntity<String> editQuizBank(Long quizBankId, QuizBankRequest quizBankRequest) {
-        if(quizBankRepository.existsById(quizBankId))
+    public ResponseEntity<String> editQuizBank(Long courseId, QuizBankRequest quizBankRequest) {
+        Long quizBankId = getQuizBankId(courseId);
+        if(quizBankId != null && quizBankRepository.existsById(quizBankId))
         {
             // Retrieve the quiz bank from the database
             QuizBank quizBank = quizBankRepository.findById(quizBankId)
@@ -53,8 +53,9 @@ public class QuizBankService {
         return new ResponseEntity<>("Quiz Bank not found", HttpStatus.NOT_FOUND);
     }
 
-    public ResponseEntity<String> deleteQuizBank(long quizBankId) {
-        if(quizBankRepository.existsById(quizBankId))
+    public ResponseEntity<String> deleteQuizBank(long courseId) {
+        Long quizBankId = getQuizBankId(courseId);
+        if(quizBankId != null && quizBankRepository.existsById(quizBankId))
         {
             // Retrieve the quiz bank from the database
             QuizBank quizBank = quizBankRepository.findById(quizBankId).orElseThrow(() -> new RuntimeException("Quiz Bank not found")); ;
@@ -66,14 +67,12 @@ public class QuizBankService {
         return new ResponseEntity<>("Quiz Bank not found", HttpStatus.NOT_FOUND);
     }
 
-    public ResponseEntity<String> createQuizFromBankQuiz(QuizFromBankRequest request, long courseId, long quizBankId) {
-        if(quizBankRepository.existsById(quizBankId))
+    public ResponseEntity<String> createQuizFromBankQuiz(QuizFromBankRequest request, long courseId) {
+        Long quizBankId = getQuizBankId(courseId);
+        if(quizBankId != null && quizBankRepository.existsById(quizBankId))
         {
             // Retrieve the quiz bank from the database
             QuizBank quizBank = quizBankRepository.findById(quizBankId).orElseThrow(() -> new RuntimeException("Quiz Bank not found"));
-//            List<Long> longQuestions = request.getQuestions().stream()
-//                    .map(Integer::longValue)
-//                    .toList();
             if(isValidQuestionsIds(quizBank.getQuestions(),request.getQuestions()))
             {
                 QuizRequest quizRequest = new QuizRequest();
@@ -91,6 +90,17 @@ public class QuizBankService {
         return new ResponseEntity<>("Quiz Bank not found", HttpStatus.NOT_FOUND);
     }
 
+
+
+    private Long getQuizBankId(Long courseId) {
+        for (QuizBank quizBank : quizBankRepository.findAll()) {
+            if (quizBank.getCourse().getId().equals(courseId))
+            {
+                return quizBank.getId();
+            }
+        }
+        return null;
+    }
 
     private List<Question> createNewQuestions(List<Long> questionsIds) {
         List<Question> questions = questionRepository.findAllById(questionsIds);
@@ -126,20 +136,8 @@ public class QuizBankService {
     public ResponseEntity<String> validation(String token,Long courseId,List<Question> questions) {
         return quizService.validation(token,courseId,questions);
     }
-    public ResponseEntity<String> validation(String token,Long courseId,Long quizBankId,List<Question> questions) {
-        ResponseEntity<String> error = quizService.validation(token,courseId,questions);
-        if (error != null) return error;
-        if(!quizBankRepository.existsById(quizBankId)){
-            return new ResponseEntity<>("Quiz bank not found", HttpStatus.NOT_FOUND);
-        }
-        return null;
-    }
-    public ResponseEntity<String> validation(String token,Long courseId,Long quizBankId) {
-        ResponseEntity<String> error = quizService.validation(token,courseId);
-        if (error != null) return error;
-        if(!quizBankRepository.existsById(quizBankId)){
-            return new ResponseEntity<>("Quiz bank not found", HttpStatus.NOT_FOUND);
-        }
-        return null;
+
+    public ResponseEntity<String> validation(String token,Long courseId) {
+        return quizService.validation(token,courseId);
     }
 }
