@@ -27,25 +27,28 @@ public class QuizService {
     private final UserRepository userRepository;
     private final QuestionRepository questionRepository;
 
-    public QuizService(QuizRepository quizRepo, CourseRepository courseRepo, JwtConfig jwtConfig, UserRepository userRepository, QuestionRepository questionRepository) {
+    public QuizService(QuizRepository quizRepo, CourseRepository courseRepo, JwtConfig jwtConfig,
+            UserRepository userRepository, QuestionRepository questionRepository) {
         this.quizRepo = quizRepo;
         this.courseRepo = courseRepo;
         this.jwtConfig = jwtConfig;
         this.userRepository = userRepository;
         this.questionRepository = questionRepository;
     }
-    public ResponseEntity<String> createQuiz(Long courseId,QuizRequest quizRequest) {
+
+    public ResponseEntity<String> createQuiz(Long courseId, QuizRequest quizRequest) {
         Quiz newQuiz = new Quiz();
         newQuiz.setTitle(quizRequest.getTitle());
         newQuiz.setDuration(quizRequest.getDuration());
         newQuiz.setStartDate(quizRequest.getStartDate());
-        List<Question> questions =  questionRepository.saveAll(quizRequest.getQuestions());
+        List<Question> questions = questionRepository.saveAll(quizRequest.getQuestions());
         newQuiz.setQuestions(questions);
         newQuiz.setCourse(courseRepo.findById(courseId).orElse(null));
         quizRepo.save(newQuiz);
         return new ResponseEntity<>("Quiz created successfully", HttpStatus.CREATED);
     }
-    public ResponseEntity<String> editQuiz(long quizId,QuizRequest quizRequest){
+
+    public ResponseEntity<String> editQuiz(long quizId, QuizRequest quizRequest) {
         // Retrieve the quiz from the database
         Quiz quiz = quizRepo.findById(quizId)
                 .orElseThrow(() -> new RuntimeException("Quiz not found"));
@@ -54,24 +57,21 @@ public class QuizService {
         if (quizRequest.getTitle() != null && !quizRequest.getTitle().equals(quiz.getTitle())) {
             quiz.setTitle(quizRequest.getTitle());
         }
-        if (quizRequest.getStartDate() != null)
-        {
+        if (quizRequest.getStartDate() != null) {
             quiz.setStartDate(quizRequest.getStartDate());
         }
-        if (quizRequest.getDuration() != null)
-        {
+        if (quizRequest.getDuration() != null) {
             quiz.setDuration(quizRequest.getDuration());
         }
-        if (quizRequest.getQuestions() != null)
-        {
+        if (quizRequest.getQuestions() != null) {
             List<Long> questionsIds = getQuestionsIds(quiz.getQuestions());
-            List<Question> questions =  questionRepository.saveAll(quizRequest.getQuestions());
+            List<Question> questions = questionRepository.saveAll(quizRequest.getQuestions());
             quiz.setQuestions(questions);
             deleteQuestions(questionsIds);
         }
         // Save the updated quiz
         quizRepo.save(quiz);
-        return new ResponseEntity<>( "Course updated successfully", HttpStatus.OK);
+        return new ResponseEntity<>("Course updated successfully", HttpStatus.OK);
     }
 
     public ResponseEntity<String> deleteQuiz(long quizId) {
@@ -80,93 +80,87 @@ public class QuizService {
         List<Long> questionsIds = getQuestionsIds(quiz.getQuestions());
         quizRepo.deleteById(quizId);
         deleteQuestions(questionsIds);
-            return new ResponseEntity<>("Course deleted successfully", HttpStatus.OK);
+        return new ResponseEntity<>("Course deleted successfully", HttpStatus.OK);
     }
 
-
-
-
-
-    public ResponseEntity<String> validation(String token,Long courseId) {
-        if (!courseRepo.existsById(courseId))
-        {
+    public ResponseEntity<String> validation(String token, Long courseId) {
+        if (!courseRepo.existsById(courseId)) {
             return new ResponseEntity<>("Course not found", HttpStatus.NOT_FOUND);
         }
-        if(!isAuthorized(token, courseId))
-        {
+        if (!isAuthorized(token, courseId)) {
             return new ResponseEntity<>("Unauthorized", HttpStatus.FORBIDDEN);
         }
         return null;
 
     }
-    public ResponseEntity<String> validation(String token,Long courseId,List<Question> questions) {
-        ResponseEntity<String> error = validation(token,courseId);
-        if(error != null)
-        {
+
+    public ResponseEntity<String> validation(String token, Long courseId, List<Question> questions) {
+        ResponseEntity<String> error = validation(token, courseId);
+        if (error != null) {
             return error;
         }
         String validQuestions = checkQuestionsValidation(questions);
-        if(!validQuestions.isEmpty()) {
-            return new ResponseEntity<>( validQuestions, HttpStatus.BAD_REQUEST);
+        if (!validQuestions.isEmpty()) {
+            return new ResponseEntity<>(validQuestions, HttpStatus.BAD_REQUEST);
         }
         return null;
     }
-    public ResponseEntity<String> validation(String token,Long courseId,Long quizId) {
-        ResponseEntity<String> error = validation(token,courseId);
-        if(error != null)
-        {
+
+    public ResponseEntity<String> validation(String token, Long courseId, Long quizId) {
+        ResponseEntity<String> error = validation(token, courseId);
+        if (error != null) {
             return error;
         }
-        if(!quizRepo.existsById(quizId)){
+        if (!quizRepo.existsById(quizId)) {
             return new ResponseEntity<>("Quiz not found", HttpStatus.NOT_FOUND);
         }
         return null;
     }
-    public ResponseEntity<String> validation(String token,Long courseId,Long quizId,List<Question> questions) {
-        ResponseEntity<String> error = validation(token,courseId,quizId);
-        if(error != null)
-        {
+
+    public ResponseEntity<String> validation(String token, Long courseId, Long quizId, List<Question> questions) {
+        ResponseEntity<String> error = validation(token, courseId, quizId);
+        if (error != null) {
             return error;
         }
         String validQuestions = checkQuestionsValidation(questions);
-        if(!validQuestions.isEmpty()) {
-            return new ResponseEntity<>( validQuestions, HttpStatus.BAD_REQUEST);
+        if (!validQuestions.isEmpty()) {
+            return new ResponseEntity<>(validQuestions, HttpStatus.BAD_REQUEST);
         }
         return null;
     }
+
     private String checkQuestionsValidation(List<Question> questions) {
-        if(questions == null)
+        if (questions == null)
             return "";
-        for (Question question : questions)
-        {
-            if (question.getType().name().equalsIgnoreCase("MCQ") && question.getOptions() == null)
-            {
-                return  "Invalid Question, You must add options to MCQ Questions";
-            }
-            else if(! question.getType().name().equalsIgnoreCase("MCQ") && question.getOptions() != null)
-            {
-                return  "Invalid Question, You must not add options to non-MCQ Questions";
+        for (Question question : questions) {
+            if (question.getType().name().equalsIgnoreCase("MCQ") && question.getOptions() == null) {
+                return "Invalid Question, You must add options to MCQ Questions";
+            } else if (!question.getType().name().equalsIgnoreCase("MCQ") && question.getOptions() != null) {
+                return "Invalid Question, You must not add options to non-MCQ Questions";
             }
 
         }
         return "";
     }
-    private boolean isAuthorized(String token,Long courseId) {
+
+    private boolean isAuthorized(String token, Long courseId) {
         String role = jwtConfig.getRoleFromToken(token);
         Long instructorId = jwtConfig.getUserIdFromToken(token);
-        Course course =  courseRepo.findById(courseId).orElse(null);
+        Course course = courseRepo.findById(courseId).orElse(null);
         User user = userRepository.findById(instructorId).orElse(null);
-        return "ADMIN".equals(role) && Objects.requireNonNull(user).getId().equals(Objects.requireNonNull(course).getInstructor().getId());
+        return "INSTRUCTOR".equals(role)
+                && Objects.requireNonNull(user).getId().equals(Objects.requireNonNull(course).getInstructor().getId());
     }
 
-      List<Long> getQuestionsIds(List<Question> questions) {
+    List<Long> getQuestionsIds(List<Question> questions) {
         List<Long> questionsIds = new ArrayList<>();
         for (Question question : questions) {
             questionsIds.add(question.getId());
         }
         return questionsIds;
     }
-     void deleteQuestions(List<Long> questionsIds) {
+
+    void deleteQuestions(List<Long> questionsIds) {
         for (Long questionId : questionsIds) {
             questionRepository.deleteById(questionId);
         }
