@@ -2,9 +2,9 @@ package com.app.LMS.DTO;
 
 public class LessonRequest {
 
-    
     private String title;
     private String content;
+    private Long instructorId;
 
     // Getters and setters
     public String getTitle() {
@@ -21,5 +21,11 @@ public class LessonRequest {
 
     public void setContent(String content) {
         this.content = content;
+    }
+    public Long getInstructorId() {
+        return this.instructorId;
+    }
+    public void setInstructorId(Long instructorId) {
+        this.instructorId = instructorId;
     }
 }

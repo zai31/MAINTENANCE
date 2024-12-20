@@ -1,5 +1,6 @@
 package com.app.LMS.assessmentManagement.controller;
 
+import com.app.LMS.DTO.FeedbackRequest;
 import com.app.LMS.assessmentManagement.model.Feedback;
 import com.app.LMS.assessmentManagement.service.FeedbackService;
 import org.springframework.http.HttpStatus;
@@ -19,20 +20,13 @@ public class FeedbackController {
     }
 
     @PostMapping("/add")
-    public ResponseEntity<String> addFeedback(@RequestBody Feedback feedback) {
+    public ResponseEntity<String> addFeedback(@RequestBody FeedbackRequest feedback) {
         try {
-            feedbackService.addFeedback(feedback);
+            feedbackService.giveFeedback(feedback);
             return new ResponseEntity<>("Feedback added successfully", HttpStatus.CREATED);
         } catch (Exception e) {
             return new ResponseEntity<>("Error adding feedback: " + e.getMessage(), HttpStatus.BAD_REQUEST);
         }
-    }
-
-    // Endpoint to get all feedback
-    @GetMapping("/all")
-    public ResponseEntity<List<Feedback>> getAllFeedback() {
-        List<Feedback> feedbackList = feedbackService.getAllFeedback();
-        return new ResponseEntity<>(feedbackList, HttpStatus.OK);
     }
 
     // Endpoint to get feedback by ID

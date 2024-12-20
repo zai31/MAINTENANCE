@@ -1,5 +1,6 @@
 package com.app.LMS.courseManagement.service;
 import com.app.LMS.DTO.CourseRequest;
+import com.app.LMS.DTO.StudentInfoDTO;
 import com.app.LMS.courseManagement.model.Course;
 import com.app.LMS.courseManagement.model.Enrollment;
 import com.app.LMS.courseManagement.model.Lesson;
@@ -32,13 +33,13 @@ public class CourseService {
         this.userRepository = userRepository;
     }
 
-    public void createCourse(Course course, Long instructorId) {
+    public Course createCourse(Course course, Long instructorId) {
         User instructor = userRepository.findById(instructorId).orElse(null);
         if (instructor == null) {
             throw new RuntimeException("Instructor not found");
         }
         course.setInstructor(instructor);
-        courseRepository.save(course);
+        return courseRepository.save(course);
     }
 
     public void addLessonToCourse(Long courseId, Lesson lesson) {
@@ -59,6 +60,7 @@ public class CourseService {
     // Helper method to convert Course to CourseResponse
     private CourseRequest convertToCourseRequest(Course course) {
         CourseRequest courseResponse = new CourseRequest();
+        courseResponse.setId(course.getId());
         courseResponse.setTitle(course.getTitle());
         courseResponse.setDescription(course.getDescription());
         courseResponse.setDuration(course.getDuration());
@@ -83,7 +85,7 @@ public class CourseService {
     }
 
 
-    public List<String> getEnrolledStudents(Long courseId) {
+    public List<StudentInfoDTO> getEnrolledStudents(Long courseId) {
         // Fetch all enrollments for the course
         List<Enrollment> enrollments = enrollmentRepository.findByCourseId(courseId);
 
@@ -95,7 +97,12 @@ public class CourseService {
         return enrollments.stream()
                 .map(enrollment -> {
                     User student = enrollment.getStudent();
-                    return student.getName() + " (" + student.getEmail() + ")";
+                    return new StudentInfoDTO(
+                            student.getId(),
+                            student.getFirstName(),
+                            student.getLastName(),
+                            student.getEmail()
+                    );
                 })
                 .collect(Collectors.toList());
     }
@@ -125,8 +132,7 @@ public class CourseService {
 
 
     public CourseContentDTO getCourseById(Long id) {
-        Course course = courseRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Course not found with ID: " + id));
+        Course course = courseRepository.findById(id).orElseThrow(() -> new RuntimeException("Course not found with ID: " + id));
 
         return mapToCourseDTO(course);
     }
@@ -134,5 +140,13 @@ public class CourseService {
     public LessonContentDTO getLesson(Long id){
         Lesson lesson = lessonRepository.findById(id).orElseThrow(() -> new RuntimeException("Lesson not found with ID: " + id));
         return mapToLessonDTO(lesson);
+    }
+
+    public Course findCourseById(Long id){
+        return courseRepository.findById(id).orElseThrow(() -> new RuntimeException("Course not found with ID: " + id));
+    }
+
+    public void saveCourse(Course course) {
+        courseRepository.save(course);
     }
 }

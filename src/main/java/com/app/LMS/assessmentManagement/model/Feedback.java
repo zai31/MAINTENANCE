@@ -14,12 +14,12 @@ public class Feedback {
     @JoinColumn(name = "submission_id", nullable = false)
     private Submission submission;
 
-    private String comments;
+    private String comment;
     private Double grade;
 
     // Getters and Setters
     public Long getId() {
-        return id;
+        return this.id;
     }
 
     public void setId(Long id) {
@@ -27,7 +27,7 @@ public class Feedback {
     }
 
     public Submission getSubmission() {
-        return submission;
+        return this.submission;
     }
 
     public void setSubmission(Submission submission) {
@@ -35,15 +35,15 @@ public class Feedback {
     }
 
     public String getComments() {
-        return comments;
+        return this.comment;
     }
 
     public void setComments(String comments) {
-        this.comments = comments;
+        this.comment = comments;
     }
 
     public Double getGrade() {
-        return grade;
+        return this.grade;
     }
 
     public void setGrade(Double grade) {
