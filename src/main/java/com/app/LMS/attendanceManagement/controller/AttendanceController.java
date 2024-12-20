@@ -7,6 +7,7 @@ import com.app.LMS.attendanceManagement.service.OtpService;
 import com.app.LMS.config.JwtConfig;
 import com.app.LMS.userManagement.model.User;
 import com.app.LMS.userManagement.repository.UserRepository;
+import com.app.LMS.userManagement.service.UserService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -22,17 +23,18 @@ public class AttendanceController {
     private final OtpService otpService;
     private final JwtConfig jwtConfig;
     private final UserRepository userRepository;
+    private final UserService userService;
 
-    public AttendanceController(AttendanceService attendanceService, OtpService otpService, JwtConfig jwtConfig, UserRepository userRepository) {
+    public AttendanceController(AttendanceService attendanceService, OtpService otpService, JwtConfig jwtConfig, UserRepository userRepository, UserService userService) {
         this.attendanceService = attendanceService;
         this.otpService = otpService;
         this.jwtConfig = jwtConfig;
         this.userRepository = userRepository;
+        this.userService = userService;
     }
 
     @PostMapping("/mark")
-    public ResponseEntity<String> markAttendance(
-            @RequestHeader("Authorization") String token, @RequestParam String otpCode, @RequestParam Long courseId) {
+    public ResponseEntity<String> markAttendance(@RequestHeader("Authorization") String token, @RequestParam String otpCode, @RequestParam Long courseId) {
         // Validate student's role
         String role = jwtConfig.getRoleFromToken(token);
         if (!"STUDENT".equals(role)) {
@@ -41,7 +43,7 @@ public class AttendanceController {
 
         // Retrieve student
         Long studentID = jwtConfig.getUserIdFromToken(token);
-        User student = userRepository.findById(studentID).orElseThrow(() -> new RuntimeException("User not found with ID: " + studentID));
+        User student = userService.findById(studentID).orElseThrow(() -> new RuntimeException("User not found with ID: " + studentID));
         // Find OTP by code and course
         OTP otp = otpService.findByCodeAndCourse(otpCode, courseId);
         if (otp == null) {
@@ -58,10 +60,7 @@ public class AttendanceController {
     }
 
     @GetMapping("/track")
-    public ResponseEntity<?> getStudentAttendanceForCourse(
-            @RequestHeader("Authorization") String token,
-            @RequestParam Long studentId,
-            @RequestParam Long courseId) {
+    public ResponseEntity<?> getStudentAttendanceForCourse(@RequestHeader("Authorization") String token, @RequestParam Long studentId, @RequestParam Long courseId) {
 
         // Validate the role
         String role = jwtConfig.getRoleFromToken(token);

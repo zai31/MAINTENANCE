@@ -17,12 +17,12 @@ public class OtpController {
 
     private final OtpService otpService;
     private final JwtConfig jwtConfig;
-    private final CourseRepository courseRepository;
+    private final CourseService courseService;
 
-    public OtpController(OtpService otpService, CourseService courseService, JwtConfig jwtConfig, CourseRepository courseRepository) {
+    public OtpController(OtpService otpService, CourseService courseService, JwtConfig jwtConfig) {
         this.otpService = otpService;
         this.jwtConfig = jwtConfig;
-        this.courseRepository = courseRepository;
+        this.courseService = courseService;
     }
 
     @PostMapping("/generate")
@@ -34,9 +34,9 @@ public class OtpController {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
-        Course course = courseRepository.findById(courseId).orElseThrow(() -> new RuntimeException("Course not found with ID: " + courseId));;
+        Course course = courseService.findCourseById(courseId);;
         OTP otp = otpService.generateOtp(course);
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(otp.getCode());
+        return ResponseEntity.status(HttpStatus.CREATED).body("OTP: " + otp.getCode());
     }
 }

@@ -15,6 +15,8 @@ public class Assignment {
     private String description;
     private LocalDateTime deadline;
 
+    private String filePath;
+
     @ManyToOne
     @JoinColumn(name = "course_id", nullable = false)
     private Course course;
@@ -59,4 +61,13 @@ public class Assignment {
     public void setCourse(Course course) {
         this.course = course;
     }
+
+    public String getFilePath() {
+        return this.filePath;
+    }
+
+    public void setFilePath(String filePath) {
+        this.filePath = filePath;
+    }
+
 }

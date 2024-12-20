@@ -1,24 +1,18 @@
 package com.app.LMS.DTO;
 
-import com.app.LMS.AssignmentsAndQuizzesManagement.Quizzes.model.Question;
-
-
 import java.util.Date;
-import java.util.List;
-
 
 public class QuizRequest {
-    @NotBlank
+    private int quizId;
     private String title;
-    @NotBlank
     private Date startDate;
-    @NotBlank
-    private String duration; // duration in minutes
-    @NotBlank
-    private List<Question> questions;
+    private int duration;
+    private Long courseID;
+    private int numberOfQuestions;
 
+    //setters and getters
     public String getTitle() {
-        return title;
+        return this.title;
     }
 
     public void setTitle(String title) {
@@ -26,26 +20,36 @@ public class QuizRequest {
     }
 
     public Date getStartDate() {
-        return startDate;
+        return this.startDate;
     }
 
     public void setStartDate(Date startDate) {
         this.startDate = startDate;
     }
 
-    public String getDuration() {
-        return duration;
+    public int getDuration() {
+        return this.duration;
     }
 
-    public void setDuration(String duration) {
+    public void setDuration(int duration) {
         this.duration = duration;
     }
-
-    public List<Question> getQuestions() {
-        return questions;
+    public Long getCourseID() {
+        return this.courseID;
+    }
+    public void setId(Long id) {
+        this.courseID = id;
     }
 
-    public void setQuestions(List<Question> questions) {
-        this.questions = questions;
+    public int getNumberOfQuestions() {
+        return this.numberOfQuestions;
+    }
+
+    public void setNumberOfQuestions(int numberOfQuestions) {
+        this.numberOfQuestions = numberOfQuestions;
+    }
+
+    public int getQuizId() {
+        return this.quizId;
     }
 }

@@ -6,6 +6,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import com.app.LMS.DTO.SignupRequest;
 
+import java.util.Optional;
+
 @Service
 public class UserService {
 
@@ -42,5 +44,13 @@ public class UserService {
     public User findByUsername(String username)
     {
         return userRepository.findByUsername(username);
+    }
+
+    public Optional<User> findById(Long id) {
+        return userRepository.findById(id);
+    }
+
+    public void saveUser(User user) {
+        userRepository.save(user);
     }
 }

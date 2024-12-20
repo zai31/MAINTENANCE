@@ -1,4 +1,4 @@
-package com.app.LMS.AssignmentsAndQuizzesManagement.Quizzes.model;
+package com.app.LMS.assessmentManagement.model;
 
 import com.app.LMS.courseManagement.model.Course;
 import jakarta.persistence.*;
@@ -10,28 +10,34 @@ import java.util.List;
 
 @Entity
 public class Quiz {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
     @NotNull
     private String title;
+
     @NotNull
     @Future
     private Date startDate;
-    @NotNull
-    private String duration; // duration in minutes
+
+    private int durationInMinutes;
+
     @NotNull
     @ManyToOne
     private Course course;
 
-//    @OneToMany(mappedBy = "id", cascade = CascadeType.ALL, orphanRemoval = true)
-
     @OneToMany
-    private  List<Question> questions;
+    private List<Question> questions;
 
-
+    // Getters and setters
     public Long getId() {
         return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
     }
 
     public String getTitle() {
@@ -50,12 +56,12 @@ public class Quiz {
         this.startDate = startDate;
     }
 
-    public String getDuration() {
-        return duration;
+    public int getDurationInMinutes() {
+        return durationInMinutes;
     }
 
-    public void setDuration(String duration) {
-        this.duration = duration;
+    public void setDurationInMinutes(int durationInMinutes) {
+        this.durationInMinutes = durationInMinutes;
     }
 
     public Course getCourse() {
@@ -69,9 +75,9 @@ public class Quiz {
     public List<Question> getQuestions() {
         return questions;
     }
+
     public void setQuestions(List<Question> questions) {
         this.questions = questions;
     }
-
 
 }

@@ -1,19 +1,24 @@
-package com.app.LMS.AssignmentsAndQuizzesManagement.Quizzes.model;
+package com.app.LMS.assessmentManagement.model;
 
 import com.app.LMS.courseManagement.model.Course;
 import jakarta.persistence.*;
 
 import java.util.List;
+
 @Entity
-public class QuizBank {
+public class QuestionBank {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    @OneToOne
-    private Course course;
-    @OneToMany
-    private List<Question> questions;
 
+    @ManyToOne
+    private Course course;  // The course associated with this question bank
+
+    @OneToMany
+    private List<Question> questions;  // List of questions in the question bank
+
+    // Getters and Setters
     public Long getId() {
         return id;
     }
