@@ -13,7 +13,7 @@ import java.util.List;
 public class FeedbackService {
 
     private final FeedbackRepository feedbackRepository;
-    private SubmissionRepository submissionRepository;
+    private final SubmissionRepository submissionRepository;
 
     public FeedbackService(FeedbackRepository feedbackRepository, SubmissionRepository submissionRepository) {
         this.feedbackRepository = feedbackRepository;
@@ -42,8 +42,16 @@ public class FeedbackService {
         return feedbackRepository.findById(id).orElseThrow(() -> new RuntimeException("Feedback with ID " + id + " not found"));
     }
 
-    public Feedback getFeedbackBySubmission(Long submissionId) {
-        return feedbackRepository.findBySubmissionId(submissionId);
+    public FeedbackRequest getFeedbackBySubmission(Long submissionId) {
+        Feedback feedback = feedbackRepository.findBySubmissionId(submissionId);
+        if (feedback == null) {
+            throw new IllegalArgumentException("Submission with ID " + submissionId + " not found");
+        }
+        FeedbackRequest request = new FeedbackRequest();
+        request.setSubmissionID(feedback.getId());
+        request.setComment(feedback.getComments());
+        request.setGrade(feedback.getGrade());
+        return request;
     }
 
 }

@@ -69,11 +69,12 @@ public class AssignmentController {
     public ResponseEntity<String> submitSolution(
             @RequestHeader("Authorization") String token,
             @RequestParam("assignmentId") Long assignmentId,
-            @RequestParam("studentId") Long studentId,
             @RequestParam("file") MultipartFile file) {
 
         // Validate the student's role
         String role = jwtConfig.getRoleFromToken(token);
+        Long studentId = jwtConfig.getUserIdFromToken(token);
+
         if (!"STUDENT".equals(role)) {
             return new ResponseEntity<>("Unauthorized", HttpStatus.FORBIDDEN);
         }
@@ -132,7 +133,7 @@ public class AssignmentController {
         }
 
         try {
-            Feedback feedback = feedbackService.getFeedbackBySubmission(submissionId);
+            FeedbackRequest feedback = feedbackService.getFeedbackBySubmission(submissionId);
             if (feedback == null) {
                 return new ResponseEntity<>("Feedback not found", HttpStatus.NOT_FOUND);
             }
