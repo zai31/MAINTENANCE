@@ -61,4 +61,7 @@ public class AssignmentService {
         return assignmentRepository.findByCourseId(courseId);
     }
 
+    public Assignment getAssignmentById(Long assignmentId) {
+        return assignmentRepository.findById(assignmentId).orElse(null);
+    }
 }

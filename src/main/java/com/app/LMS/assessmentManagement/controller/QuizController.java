@@ -8,6 +8,8 @@ import com.app.LMS.assessmentManagement.model.Quiz;
 import com.app.LMS.assessmentManagement.model.QuizAttempt;
 import com.app.LMS.assessmentManagement.service.QuizService;
 import com.app.LMS.config.JwtConfig;
+import com.app.LMS.notificationManagement.eventBus.EventBus;
+import com.app.LMS.notificationManagement.eventBus.events.QuizCreatedEvent;
 import org.jboss.logging.annotations.Param;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -22,10 +24,12 @@ public class QuizController {
 
     private final QuizService quizService;
     private final JwtConfig jwtConfig;
+    private final EventBus eventBus;
 
-    QuizController(QuizService quizService, JwtConfig jwtConfig) {
+    QuizController(QuizService quizService, JwtConfig jwtConfig, EventBus eventBus) {
         this.quizService = quizService;
         this.jwtConfig = jwtConfig;
+        this.eventBus = eventBus;
     }
 
     // Create a new Quiz
@@ -37,6 +41,9 @@ public class QuizController {
         }
 
         Quiz quiz = quizService.createQuiz(request);
+        QuizCreatedEvent event = new QuizCreatedEvent(quiz.getId());
+        eventBus.publish(event);
+
         return new ResponseEntity<>("Quiz created successfully with ID: " + quiz.getId(), HttpStatus.CREATED);
     }
 

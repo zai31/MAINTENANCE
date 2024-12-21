@@ -68,7 +68,7 @@ public class CourseService {
     }
 
     // Method to enroll a student in a course
-    public void enrollStudentInCourse(Long courseId, Long studentId) {
+    public Boolean enrollStudentInCourse(Long courseId, Long studentId) {
         Course course = courseRepository.findById(courseId).orElseThrow(() -> new RuntimeException("Course not found"));
         User student = userRepository.findById(studentId).orElseThrow(() -> new RuntimeException("Student not found"));
 
@@ -82,6 +82,7 @@ public class CourseService {
         enrollment.setStudent(student);
         enrollment.setCourse(course);
         enrollmentRepository.save(enrollment);
+        return Boolean.TRUE;
     }
 
 

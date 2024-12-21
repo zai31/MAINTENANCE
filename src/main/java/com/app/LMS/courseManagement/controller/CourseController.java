@@ -2,6 +2,10 @@ package com.app.LMS.courseManagement.controller;
 import java.util.List;
 import com.app.LMS.DTO.*;
 import com.app.LMS.courseManagement.service.LessonService;
+import com.app.LMS.notificationManagement.eventBus.EventBus;
+import com.app.LMS.notificationManagement.eventBus.events.AddedLessonEvent;
+import com.app.LMS.notificationManagement.eventBus.events.EnrollmentEvent;
+import com.app.LMS.notificationManagement.eventBus.events.MaterialUploadedEvent;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -26,8 +30,8 @@ public class CourseController {
     private final CourseRepository courseRepository;
     private final JwtConfig jwtConfig;
     private final LessonService lessonService;
-
-    public CourseController(CourseService courseService, MediaService mediaservice, LessonRepository lessonRepository, CourseRepository courseRepository, JwtConfig jwtConfig, LessonService lessonService)
+    private final EventBus eventBus;
+    public CourseController(CourseService courseService, MediaService mediaservice, LessonRepository lessonRepository, CourseRepository courseRepository, JwtConfig jwtConfig, LessonService lessonService, EventBus eventBus)
     {
         this.courseService = courseService;
         this.mediaservice = mediaservice;
@@ -35,6 +39,7 @@ public class CourseController {
         this.courseRepository = courseRepository;
         this.jwtConfig = jwtConfig;
         this.lessonService = lessonService;
+        this.eventBus = eventBus;
     }
 
     @PostMapping("/create")
@@ -193,7 +198,11 @@ public class CourseController {
     
                 // Save the lesson to the database
                 Lesson created = lessonService.saveLesson(lesson);
-    
+                if(created != null)
+                {
+                    AddedLessonEvent event = new AddedLessonEvent(created.getCourse().getId());
+                    eventBus.publish(event);
+                }
                 return new ResponseEntity<>("Lesson created successfully with ID: " + created.getId(), HttpStatus.CREATED);
             } else {
                 return new ResponseEntity<>("Unauthorized", HttpStatus.FORBIDDEN);
@@ -298,6 +307,9 @@ public class CourseController {
                 return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
             }
 
+            MaterialUploadedEvent event = new MaterialUploadedEvent(lessonId);
+            eventBus.publish(event);
+
             return new ResponseEntity<>(response, HttpStatus.CREATED);
         } catch (Exception e) {
             return new ResponseEntity<>("Error: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
@@ -324,8 +336,11 @@ public class CourseController {
             }
 
             // Enroll the student in the course
-            courseService.enrollStudentInCourse(courseId, studentId);
-
+            Boolean enrolled = courseService.enrollStudentInCourse(courseId, studentId);
+            if(enrolled){
+                EnrollmentEvent event = new EnrollmentEvent(studentId, courseId);
+                eventBus.publish(event);
+            }
             return ResponseEntity.ok("Student enrolled successfully");
         } catch (Exception e) {
             return ResponseEntity.status(400).body("Error enrolling in course: " + e.getMessage());

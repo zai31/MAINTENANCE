@@ -7,6 +7,9 @@ import com.app.LMS.assessmentManagement.model.Submission;
 import com.app.LMS.assessmentManagement.service.AssignmentService;
 import com.app.LMS.assessmentManagement.service.FeedbackService;
 import com.app.LMS.config.JwtConfig;
+import com.app.LMS.notificationManagement.eventBus.EventBus;
+import com.app.LMS.notificationManagement.eventBus.events.AssignmentCreatedEvent;
+import com.app.LMS.notificationManagement.eventBus.events.FeedbackCreatedEvent;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -24,12 +27,14 @@ public class AssignmentController {
     private final JwtConfig jwtConfig;
     private final SubmissionService submissionService;
     private final FeedbackService feedbackService;
+    private final EventBus eventBus;
 
-    public AssignmentController(AssignmentService assignmentService, JwtConfig jwtConfig, SubmissionService submissionService, FeedbackService feedbackService) {
+    public AssignmentController(AssignmentService assignmentService, JwtConfig jwtConfig, SubmissionService submissionService, FeedbackService feedbackService, EventBus eventBus) {
         this.assignmentService = assignmentService;
         this.jwtConfig = jwtConfig;
         this.submissionService = submissionService;
         this.feedbackService = feedbackService;
+        this.eventBus = eventBus;
     }
 
     @PostMapping(value = "/create", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -57,7 +62,10 @@ public class AssignmentController {
             assignment.setDeadline(parsedDeadline);
 
             // Create assignment
-            assignmentService.createAssignment(assignment, courseId, file);
+            Assignment created = assignmentService.createAssignment(assignment, courseId, file);
+
+            AssignmentCreatedEvent event = new AssignmentCreatedEvent(created.getId());
+            eventBus.publish(event);
 
             return new ResponseEntity<>("Assignment created successfully", HttpStatus.CREATED);
         } catch (Exception e) {
@@ -113,7 +121,9 @@ public class AssignmentController {
 
         try
         {
-            feedbackService.giveFeedback(feedbackRequest);
+            Feedback feedback = feedbackService.giveFeedback(feedbackRequest);
+            FeedbackCreatedEvent event = new FeedbackCreatedEvent(feedback.getId());
+            eventBus.publish(event);
             return new ResponseEntity<>("Feedback given successfully", HttpStatus.CREATED);
         }
         catch (Exception e)

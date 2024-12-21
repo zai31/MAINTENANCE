@@ -173,4 +173,8 @@ public class QuizService {
         );
     }
 
+    public Quiz getById(Long quizId)
+    {
+        return quizRepository.findById(quizId).orElse(null);
+    }
 }
