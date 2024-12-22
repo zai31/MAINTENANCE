@@ -1,5 +1,19 @@
 package com.app.LMS.assessmentManagement.controller;
 
+import java.util.List;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.app.LMS.DTO.QuizDetailsDTO;
 import com.app.LMS.DTO.QuizRequest;
 import com.app.LMS.DTO.QuizResponseDTO;
@@ -10,13 +24,8 @@ import com.app.LMS.assessmentManagement.service.QuizService;
 import com.app.LMS.config.JwtConfig;
 import com.app.LMS.notificationManagement.eventBus.EventBus;
 import com.app.LMS.notificationManagement.eventBus.events.QuizCreatedEvent;
-import org.jboss.logging.annotations.Param;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/quiz")
@@ -34,7 +43,7 @@ public class QuizController {
 
     // Create a new Quiz
     @PostMapping("/create")
-    public ResponseEntity<?> createQuiz(@RequestHeader("Authorization") String token,@RequestBody @Valid QuizRequest request) {
+    public ResponseEntity<?> createQuiz(@RequestHeader("Authorization") String token, @RequestBody @Valid QuizRequest request) {
         String role = jwtConfig.getRoleFromToken(token);
         if (!"INSTRUCTOR".equals(role)) {
             return new ResponseEntity<>("Unauthorized", HttpStatus.FORBIDDEN);
@@ -48,7 +57,7 @@ public class QuizController {
     }
 
     // Update Quiz details
-    @PutMapping("update/{id}")
+    @PutMapping("/update/{id}")
     public ResponseEntity<?> updateQuiz(@RequestHeader("Authorization") String token, @PathVariable Long id, @RequestBody @Valid QuizRequest updatedQuizRequest) {
         String role = jwtConfig.getRoleFromToken(token);
         if (!"INSTRUCTOR".equals(role)) {
@@ -64,7 +73,7 @@ public class QuizController {
 
     // Get all quizzes for a specific course
     @GetMapping("/list")
-    public ResponseEntity<?> getQuizzesByCourse(@RequestHeader("Authorization") String token, @Param Long courseId) {
+    public ResponseEntity<?> getQuizzesByCourse(@RequestHeader("Authorization") String token, @RequestParam Long courseId) {
         String role = jwtConfig.getRoleFromToken(token);
         if (!"INSTRUCTOR".equals(role)) {
             return new ResponseEntity<>("Unauthorized", HttpStatus.FORBIDDEN);
@@ -77,16 +86,16 @@ public class QuizController {
         return new ResponseEntity<>(quizzes, HttpStatus.OK);  // Return 200 with quizzes list
     }
 
+    // Get quiz details by ID
     @GetMapping("/{quizId}")
     public ResponseEntity<?> getQuiz(@RequestHeader("Authorization") String token, @PathVariable Long quizId) {
         try {
-            // Extract role from token (if necessary)
             String role = jwtConfig.getRoleFromToken(token);
 
-            if(!"STUDENT".equals(role)){
-                return ResponseEntity.status(401).body("Unauthorized");
+            if (!"STUDENT".equals(role)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Unauthorized");
             }
-            // Fetch the quiz details from the service
+
             QuizDetailsDTO quizDetails = quizService.getQuizDetails(quizId);
 
             if (quizDetails == null) {
@@ -97,14 +106,16 @@ public class QuizController {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error fetching quiz details: " + e.getMessage());
         }
-
     }
+
+    // Submit a quiz
     @PostMapping("/submit")
     public ResponseEntity<?> submitQuiz(@RequestHeader("Authorization") String token, @RequestBody SubmitQuizRequest submissionRequest) {
         String role = jwtConfig.getRoleFromToken(token);
         if (!"STUDENT".equals(role)) {
             return new ResponseEntity<>("Unauthorized", HttpStatus.FORBIDDEN);
         }
+
         Long studentId = jwtConfig.getUserIdFromToken(token);
         submissionRequest.setStudentId(studentId);
         QuizAttempt attempt = quizService.submitQuiz(submissionRequest);
