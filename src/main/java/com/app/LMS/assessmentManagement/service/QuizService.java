@@ -113,7 +113,9 @@ public class QuizService {
     public QuizAttempt submitQuiz(SubmitQuizRequest request){
         Quiz quiz = quizRepository.findById(request.getQuizId()).orElseThrow(() -> new RuntimeException("Quiz not found"));
         User student = userRepository.findById(request.getStudentId()).orElseThrow(() -> new RuntimeException("Student not found"));
-
+        if(quizAttemptRepository.existsByStudentIdAndQuizId(student.getId(), quiz.getId())){
+            throw new RuntimeException("Student submitted this quiz before");
+        }
         QuizAttempt attempt = new QuizAttempt();
         attempt.setQuiz(quiz);
         attempt.setStudent(student);

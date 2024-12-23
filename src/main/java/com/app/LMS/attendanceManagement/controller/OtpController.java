@@ -30,11 +30,17 @@ public class OtpController {
     {
         // Validate the instructor's role
         String role = jwtConfig.getRoleFromToken(token);
+        Long instructorId = jwtConfig.getUserIdFromToken(token);
+
         if (!"INSTRUCTOR".equals(role)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
-        Course course = courseService.findCourseById(courseId);;
+        Course course = courseService.findCourseById(courseId);
+        if(!course.getInstructor().getId().equals(instructorId)){
+            return new ResponseEntity<>("Unauthorized: You do not own this course", HttpStatus.FORBIDDEN);
+        }
+
         OTP otp = otpService.generateOtp(course);
 
         return ResponseEntity.status(HttpStatus.CREATED).body("OTP: " + otp.getCode());

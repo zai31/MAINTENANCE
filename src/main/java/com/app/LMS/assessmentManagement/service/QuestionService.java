@@ -22,8 +22,7 @@ public class QuestionService {
     }
 
     public Question updateQuestion(Long questionId, Question questionDetails) {
-        Question question = questionRepository.findById(questionId)
-                .orElseThrow(() -> new RuntimeException("Question not found"));
+        Question question = questionRepository.findById(questionId).orElseThrow(() -> new RuntimeException("Question not found"));
 
         question.setQuestionText(questionDetails.getQuestionText());
         question.setType(questionDetails.getType());

@@ -4,6 +4,7 @@ import com.app.LMS.assessmentManagement.model.Question;
 import com.app.LMS.assessmentManagement.service.QuestionBankService;
 import com.app.LMS.assessmentManagement.service.QuestionService;
 import com.app.LMS.config.JwtConfig;
+import com.app.LMS.courseManagement.service.CourseService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -18,19 +19,28 @@ public class QuestionController {
     private final QuestionService questionService;
     private final QuestionBankService questionBankService;
     private final JwtConfig jwtConfig;
+    private final CourseService courseService;
 
-    QuestionController(QuestionService questionService, QuestionBankService questionBankService, JwtConfig jwtConfig) {
+    QuestionController(QuestionService questionService, QuestionBankService questionBankService, JwtConfig jwtConfig, CourseService courseService) {
         this.questionService = questionService;
         this.questionBankService = questionBankService;
         this.jwtConfig = jwtConfig;
+        this.courseService = courseService;
     }
 
     // Create a new question
     @PostMapping("/create")
     public ResponseEntity<?> createAndAddToBank(@RequestHeader("Authorization") String token, @RequestParam Long courseId, @RequestBody @Valid Question question) {
         String role = jwtConfig.getRoleFromToken(token);
+        Long instructorId = jwtConfig.getUserIdFromToken(token);
+
         if (!"INSTRUCTOR".equals(role) && !"ADMIN".equals(role)) {
             return new ResponseEntity<>("Unauthorized", HttpStatus.FORBIDDEN);
+        }
+        if("INSTRUCTOR".equals(role)) {
+            if(!courseService.findCourseById(courseId).getInstructor().getId().equals(instructorId)) {
+                return new ResponseEntity<>("Unauthorized: You are not the owner of this course", HttpStatus.FORBIDDEN);
+            }
         }
 
         try {
@@ -49,8 +59,15 @@ public class QuestionController {
     @GetMapping("/course/{courseId}")
     public ResponseEntity<?> getQuestionsByCourse(@RequestHeader("Authorization") String token,@PathVariable Long courseId) {
         String role = jwtConfig.getRoleFromToken(token);
+        Long instructorId = jwtConfig.getUserIdFromToken(token);
+
         if (!"INSTRUCTOR".equals(role) && !"ADMIN".equals(role)) {
             return new ResponseEntity<>("Unauthorized", HttpStatus.FORBIDDEN);
+        }
+        if("INSTRUCTOR".equals(role)) {
+            if(!courseService.findCourseById(courseId).getInstructor().getId().equals(instructorId)) {
+                return new ResponseEntity<>("Unauthorized: You are not the owner of this course", HttpStatus.FORBIDDEN);
+            }
         }
 
         List<Question> questions = questionBankService.getQuestionsByCourse(courseId);

@@ -7,6 +7,8 @@ import com.app.LMS.assessmentManagement.model.Submission;
 import com.app.LMS.assessmentManagement.service.AssignmentService;
 import com.app.LMS.assessmentManagement.service.FeedbackService;
 import com.app.LMS.config.JwtConfig;
+import com.app.LMS.courseManagement.model.Course;
+import com.app.LMS.courseManagement.service.CourseService;
 import com.app.LMS.notificationManagement.eventBus.EventBus;
 import com.app.LMS.notificationManagement.eventBus.events.AssignmentCreatedEvent;
 import com.app.LMS.notificationManagement.eventBus.events.FeedbackCreatedEvent;
@@ -28,12 +30,14 @@ public class AssignmentController {
     private final SubmissionService submissionService;
     private final FeedbackService feedbackService;
     private final EventBus eventBus;
+    private final CourseService courseService;
 
-    public AssignmentController(AssignmentService assignmentService, JwtConfig jwtConfig, SubmissionService submissionService, FeedbackService feedbackService, EventBus eventBus) {
+    public AssignmentController(AssignmentService assignmentService, JwtConfig jwtConfig, SubmissionService submissionService, FeedbackService feedbackService, EventBus eventBus, CourseService courseService) {
         this.assignmentService = assignmentService;
         this.jwtConfig = jwtConfig;
         this.submissionService = submissionService;
         this.feedbackService = feedbackService;
+        this.courseService = courseService;
         this.eventBus = eventBus;
     }
 
@@ -47,21 +51,23 @@ public class AssignmentController {
             @RequestParam("deadline") String deadline) {
 
         String role = jwtConfig.getRoleFromToken(token);
+        Long instructorId = jwtConfig.getUserIdFromToken(token);
         if (!"INSTRUCTOR".equals(role)) {
             return new ResponseEntity<>("Unauthorized", HttpStatus.FORBIDDEN);
         }
+        Course course = courseService.findCourseById(courseId);
+        if (!course.getInstructor().getId().equals(instructorId)) {
+            return new ResponseEntity<>("Unauthorized: You do not own this course", HttpStatus.FORBIDDEN);
+        }
 
         try {
-            // Convert deadline to LocalDateTime
             LocalDateTime parsedDeadline = LocalDateTime.parse(deadline);
 
-            // Create Assignment object
             Assignment assignment = new Assignment();
             assignment.setTitle(title);
             assignment.setDescription(description);
             assignment.setDeadline(parsedDeadline);
 
-            // Create assignment
             Assignment created = assignmentService.createAssignment(assignment, courseId, file);
 
             AssignmentCreatedEvent event = new AssignmentCreatedEvent(created.getId());
@@ -86,6 +92,11 @@ public class AssignmentController {
         if (!"STUDENT".equals(role)) {
             return new ResponseEntity<>("Unauthorized", HttpStatus.FORBIDDEN);
         }
+        Assignment assignment = assignmentService.getAssignmentById(assignmentId);
+        boolean enrolled = courseService.isEnrolled(assignment.getCourse().getId(), studentId);
+        if(!enrolled){
+            return ResponseEntity.status(403).body("You must be enrolled in the course to be able to view its content");
+        }
 
         try {
             submissionService.submitSolution(assignmentId, studentId, file);
@@ -96,7 +107,18 @@ public class AssignmentController {
     }
 
     @GetMapping("/course/{courseId}")
-    public ResponseEntity<List<Assignment>> getAllAssignments(@PathVariable Long courseId) {
+    public ResponseEntity<?> getAllAssignments(@RequestHeader("Authorization") String token, @PathVariable Long courseId) {
+        String role = jwtConfig.getRoleFromToken(token);
+        Long studentId = jwtConfig.getUserIdFromToken(token);
+
+        if (!"STUDENT".equals(role)) {
+            return new ResponseEntity<>("Unauthorized", HttpStatus.FORBIDDEN);
+        }
+        boolean enrolled = courseService.isEnrolled(courseId, studentId);
+        if(!enrolled){
+            return ResponseEntity.status(403).body("You must be enrolled in the course to be able to view its content");
+        }
+
         List<Assignment> assignments = assignmentService.getAllAssignments(courseId);
         return new ResponseEntity<>(assignments, HttpStatus.OK);
     }
@@ -104,8 +126,14 @@ public class AssignmentController {
     @GetMapping("/submission/{assignmentId}")
     public ResponseEntity<?> getAllSubmissions(@RequestHeader("Authorization") String token, @PathVariable Long assignmentId) {
         String role = jwtConfig.getRoleFromToken(token);
+        Long instructorId = jwtConfig.getUserIdFromToken(token);
+
         if (!"INSTRUCTOR".equals(role)) {
             return new ResponseEntity<>("Unauthorized", HttpStatus.FORBIDDEN);
+        }
+        Assignment assignment = assignmentService.getAssignmentById(assignmentId);
+        if(!assignment.getCourse().getInstructor().getId().equals(instructorId)){
+            return new ResponseEntity<>("Unauthorized: You do not own this course", HttpStatus.FORBIDDEN);
         }
 
         List<Submission> submissions = submissionService.getAllSubmissions(assignmentId);
@@ -115,8 +143,14 @@ public class AssignmentController {
     @GetMapping("/feedback/create")
     public ResponseEntity<String> createFeedback(@RequestHeader("Authorization") String token, @RequestBody FeedbackRequest feedbackRequest) {
         String role = jwtConfig.getRoleFromToken(token);
+        Long instructorId = jwtConfig.getUserIdFromToken(token);
+
         if (!"INSTRUCTOR".equals(role)) {
             return new ResponseEntity<>("Unauthorized", HttpStatus.FORBIDDEN);
+        }
+        Course course = submissionService.getSubmission(feedbackRequest.getSubmissionID()).getAssignment().getCourse();
+        if(!course.getInstructor().getId().equals(instructorId)){
+            return new ResponseEntity<>("Unauthorized: You do not own this course", HttpStatus.FORBIDDEN);
         }
 
         try
@@ -136,10 +170,13 @@ public class AssignmentController {
     public ResponseEntity<?> getFeedback(@RequestHeader("Authorization") String token, @PathVariable Long submissionId) {
 
         String role = jwtConfig.getRoleFromToken(token);
+        Long studentId = jwtConfig.getUserIdFromToken(token);
 
-        // Ensure that only students can access this endpoint
         if (!"STUDENT".equals(role)) {
             return new ResponseEntity<>("Unauthorized", HttpStatus.FORBIDDEN);
+        }
+        if(!submissionService.getSubmission(submissionId).getStudent().getId().equals(studentId)){
+            return new ResponseEntity<>("Unauthorized: You are not authorized to view this feedback", HttpStatus.FORBIDDEN);
         }
 
         try {

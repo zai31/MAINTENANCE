@@ -14,8 +14,6 @@ import org.springframework.web.multipart.MultipartFile;
 import com.app.LMS.config.JwtConfig;
 import com.app.LMS.courseManagement.model.Course;
 import com.app.LMS.courseManagement.model.Lesson;
-import com.app.LMS.courseManagement.repository.CourseRepository;
-import com.app.LMS.courseManagement.repository.LessonRepository;
 import com.app.LMS.courseManagement.service.CourseService;
 import com.app.LMS.courseManagement.service.MediaService;
 import jakarta.validation.Valid;
@@ -26,17 +24,13 @@ import jakarta.validation.Valid;
 public class CourseController {
     private final CourseService courseService;
     private final MediaService mediaservice;
-    private final LessonRepository lessonRepository;
-    private final CourseRepository courseRepository;
     private final JwtConfig jwtConfig;
     private final LessonService lessonService;
     private final EventBus eventBus;
-    public CourseController(CourseService courseService, MediaService mediaservice, LessonRepository lessonRepository, CourseRepository courseRepository, JwtConfig jwtConfig, LessonService lessonService, EventBus eventBus)
+    public CourseController(CourseService courseService, MediaService mediaservice, JwtConfig jwtConfig, LessonService lessonService, EventBus eventBus)
     {
         this.courseService = courseService;
         this.mediaservice = mediaservice;
-        this.lessonRepository = lessonRepository;
-        this.courseRepository = courseRepository;
         this.jwtConfig = jwtConfig;
         this.lessonService = lessonService;
         this.eventBus = eventBus;
@@ -162,7 +156,7 @@ public class CourseController {
             }
 
             // Delete the course
-            courseRepository.delete(course);
+            courseService.delete(course);
 
             return new ResponseEntity<>("Course deleted successfully", HttpStatus.OK);
         } catch (Exception e) {
@@ -181,7 +175,7 @@ public class CourseController {
                 Long instructorId = jwtConfig.getUserIdFromToken(token);
     
                 // Retrieve the course from the database using courseId
-                Course course = courseRepository.findById(courseId).orElseThrow(() -> new RuntimeException("Course not found"));
+                Course course = courseService.findCourseById(courseId);
     
                 // Check if the current instructor owns the course
                 if (!course.getInstructor().getId().equals(instructorId)) {
@@ -244,7 +238,7 @@ public class CourseController {
             }
             
             // Save the updated lesson
-            lessonRepository.save(lesson);
+            lessonService.save(lesson);
             
             return new ResponseEntity<>("Lesson updated successfully", HttpStatus.OK);
         } catch (Exception e) {
@@ -279,7 +273,7 @@ public class CourseController {
 
 
             // Delete the lesson
-            lessonRepository.delete(lesson);
+            lessonService.delete(lesson);
 
             return new ResponseEntity<>("Lesson deleted successfully", HttpStatus.OK);
         } catch (Exception e) {
@@ -294,8 +288,17 @@ public class CourseController {
         try {
             // Extract role and validate authorization
             String role = jwtConfig.getRoleFromToken(token);
+            Long instructorId = jwtConfig.getUserIdFromToken(token);
+
             if (!"INSTRUCTOR".equals(role) && !"ADMIN".equals(role)) {
                 return new ResponseEntity<>("Unauthorized", HttpStatus.FORBIDDEN);
+            }
+
+            Lesson lesson = lessonService.getByID(lessonId);
+            if ("INSTRUCTOR".equals(role)) {
+                if (!lesson.getCourse().getInstructor().getId().equals(instructorId)) {
+                    return new ResponseEntity<>("Unauthorized: You do not own this course", HttpStatus.FORBIDDEN);
+                }
             }
 
             // Use MediaService to handle the file upload
@@ -361,7 +364,7 @@ public class CourseController {
 
             Course course = courseService.findCourseById(courseId);
             if(!course.getInstructor().getId().equals(instructorId)){
-                return ResponseEntity.status(403).body("Instructor does not belong to this course");
+                return ResponseEntity.status(403).body("Unauthorized: You do not own this course");
             }
 
             // Get the list of enrolled students
@@ -375,13 +378,33 @@ public class CourseController {
     }
 
     @GetMapping("/{id}/content")
-    public ResponseEntity<CourseContentDTO> getContent(@PathVariable Long id) {
+    public ResponseEntity<?> getContent(@RequestHeader("Authorization") String token, @PathVariable Long id) {
+        String role = jwtConfig.getRoleFromToken(token);
+        Long studentId = jwtConfig.getUserIdFromToken(token);
+        if (!"STUDENT".equals(role)) {
+            return ResponseEntity.status(403).body("Only students are allowed to get the content of a course");
+        }
+        boolean enrolled = courseService.isEnrolled(id, studentId);
+        if(!enrolled){
+            return ResponseEntity.status(403).body("You must be enrolled in the course to be able to view its content");
+        }
+
         CourseContentDTO course = courseService.getCourseById(id);
         return ResponseEntity.ok(course);
     }
 
     @GetMapping("/lesson/{id}/content")
-    public ResponseEntity<LessonContentDTO> getLessonContent(@PathVariable Long id) {
+    public ResponseEntity<?> getLessonContent(@RequestHeader("Authorization") String token, @PathVariable Long id) {
+        String role = jwtConfig.getRoleFromToken(token);
+        Long studentId = jwtConfig.getUserIdFromToken(token);
+        if (!"STUDENT".equals(role)) {
+            return ResponseEntity.status(403).body("Only students are allowed to get the content of a lesson");
+        }
+        Course course = lessonService.getByID(id).getCourse();
+        boolean enrolled = courseService.isEnrolled(course.getId(), studentId);
+        if(!enrolled){
+            return ResponseEntity.status(403).body("You must be enrolled in the course to be able to view its content");
+        }
         LessonContentDTO lesson = courseService.getLesson(id);
         return ResponseEntity.ok(lesson);
     }

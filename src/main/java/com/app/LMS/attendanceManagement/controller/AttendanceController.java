@@ -5,6 +5,8 @@ import com.app.LMS.attendanceManagement.model.OTP;
 import com.app.LMS.attendanceManagement.service.AttendanceService;
 import com.app.LMS.attendanceManagement.service.OtpService;
 import com.app.LMS.config.JwtConfig;
+import com.app.LMS.courseManagement.model.Course;
+import com.app.LMS.courseManagement.service.CourseService;
 import com.app.LMS.userManagement.model.User;
 import com.app.LMS.userManagement.repository.UserRepository;
 import com.app.LMS.userManagement.service.UserService;
@@ -24,13 +26,15 @@ public class AttendanceController {
     private final JwtConfig jwtConfig;
     private final UserRepository userRepository;
     private final UserService userService;
+    private final CourseService courseService;
 
-    public AttendanceController(AttendanceService attendanceService, OtpService otpService, JwtConfig jwtConfig, UserRepository userRepository, UserService userService) {
+    public AttendanceController(AttendanceService attendanceService, OtpService otpService, JwtConfig jwtConfig, UserRepository userRepository, UserService userService, CourseService courseService) {
         this.attendanceService = attendanceService;
         this.otpService = otpService;
         this.jwtConfig = jwtConfig;
         this.userRepository = userRepository;
         this.userService = userService;
+        this.courseService = courseService;
     }
 
     @PostMapping("/mark")
@@ -50,6 +54,16 @@ public class AttendanceController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid OTP for the specified course.");
         }
 
+        Course course = otp.getCourse();
+        boolean enrolled = courseService.isEnrolled(course.getId(), studentID);
+        if(!enrolled){
+            return ResponseEntity.status(403).body("You must be enrolled in the course to be able to view its content");
+        }
+
+        boolean marked = attendanceService.isMarked(otp.getCode(), studentID);
+        if(marked){
+            return new ResponseEntity<>("error: You have already attended this class", HttpStatus.BAD_REQUEST);
+        }
         // Mark attendance
         Boolean response = attendanceService.markAttendance(student, otp);
         if (!response) {
@@ -64,13 +78,19 @@ public class AttendanceController {
 
         // Validate the role
         String role = jwtConfig.getRoleFromToken(token);
+        Long instructorId = jwtConfig.getUserIdFromToken(token);
+
         if (!"ADMIN".equals(role) && !"INSTRUCTOR".equals(role)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Access Denied.");
         }
-
+        Course course = courseService.findCourseById(courseId);
+        if ("INSTRUCTOR".equals(role)) {
+            if (!course.getInstructor().getId().equals(instructorId)) {
+                return new ResponseEntity<>("Unauthorized: You do not own this course", HttpStatus.FORBIDDEN);
+            }
+        }
         // Validate if the student exists
-        User student = userRepository.findById(studentId)
-                .orElseThrow(() -> new RuntimeException("Student not found with ID: " + studentId));
+        User student = userRepository.findById(studentId).orElseThrow(() -> new RuntimeException("Student not found with ID: " + studentId));
 
         // Fetch attendance for the student and course
         List<Attendance> attendanceList = attendanceService.getAttendanceByStudentAndCourse(student, courseId);

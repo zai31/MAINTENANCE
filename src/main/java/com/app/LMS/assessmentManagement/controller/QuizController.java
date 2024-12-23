@@ -2,6 +2,7 @@ package com.app.LMS.assessmentManagement.controller;
 
 import java.util.List;
 
+import com.app.LMS.courseManagement.service.CourseService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -34,19 +35,26 @@ public class QuizController {
     private final QuizService quizService;
     private final JwtConfig jwtConfig;
     private final EventBus eventBus;
+    private final CourseService courseService;
 
-    QuizController(QuizService quizService, JwtConfig jwtConfig, EventBus eventBus) {
+    QuizController(QuizService quizService, JwtConfig jwtConfig, EventBus eventBus, CourseService courseService) {
         this.quizService = quizService;
         this.jwtConfig = jwtConfig;
         this.eventBus = eventBus;
+        this.courseService = courseService;
     }
 
     // Create a new Quiz
     @PostMapping("/create")
     public ResponseEntity<?> createQuiz(@RequestHeader("Authorization") String token, @RequestBody @Valid QuizRequest request) {
         String role = jwtConfig.getRoleFromToken(token);
+        Long instructorId = jwtConfig.getUserIdFromToken(token);
+
         if (!"INSTRUCTOR".equals(role)) {
             return new ResponseEntity<>("Unauthorized", HttpStatus.FORBIDDEN);
+        }
+        if(!courseService.findCourseById(request.getCourseID()).getInstructor().getId().equals(instructorId)){
+            return new ResponseEntity<>("Unauthorized: You are not the owner of this course", HttpStatus.FORBIDDEN);
         }
 
         Quiz quiz = quizService.createQuiz(request);
@@ -60,30 +68,40 @@ public class QuizController {
     @PutMapping("/update/{id}")
     public ResponseEntity<?> updateQuiz(@RequestHeader("Authorization") String token, @PathVariable Long id, @RequestBody @Valid QuizRequest updatedQuizRequest) {
         String role = jwtConfig.getRoleFromToken(token);
+        Long instructorId = jwtConfig.getUserIdFromToken(token);
+
         if (!"INSTRUCTOR".equals(role)) {
             return new ResponseEntity<>("Unauthorized", HttpStatus.FORBIDDEN);
+        }
+        if(!courseService.findCourseById(updatedQuizRequest.getCourseID()).getInstructor().getId().equals(instructorId)){
+            return new ResponseEntity<>("Unauthorized: You are not the owner of this course", HttpStatus.FORBIDDEN);
         }
 
         Quiz updatedQuiz = quizService.updateQuiz(id, updatedQuizRequest);
         if (updatedQuiz == null) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);  // Return 404 if quiz not found
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
-        return new ResponseEntity<>(updatedQuiz, HttpStatus.OK);  // Return 200 for successful update
+        return new ResponseEntity<>(updatedQuiz, HttpStatus.OK);
     }
 
     // Get all quizzes for a specific course
     @GetMapping("/list")
     public ResponseEntity<?> getQuizzesByCourse(@RequestHeader("Authorization") String token, @RequestParam Long courseId) {
         String role = jwtConfig.getRoleFromToken(token);
+        Long instructorId = jwtConfig.getUserIdFromToken(token);
+
         if (!"INSTRUCTOR".equals(role)) {
             return new ResponseEntity<>("Unauthorized", HttpStatus.FORBIDDEN);
+        }
+        if(!courseService.findCourseById(courseId).getInstructor().getId().equals(instructorId)){
+            return new ResponseEntity<>("Unauthorized: You are not the owner of this course", HttpStatus.FORBIDDEN);
         }
 
         List<QuizResponseDTO> quizzes = quizService.getQuizzesByCourse(courseId);
         if (quizzes.isEmpty()) {
-            return new ResponseEntity<>(HttpStatus.NO_CONTENT);  // Return 204 if no quizzes found
+            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
         }
-        return new ResponseEntity<>(quizzes, HttpStatus.OK);  // Return 200 with quizzes list
+        return new ResponseEntity<>(quizzes, HttpStatus.OK);
     }
 
     // Get quiz details by ID
@@ -91,9 +109,14 @@ public class QuizController {
     public ResponseEntity<?> getQuiz(@RequestHeader("Authorization") String token, @PathVariable Long quizId) {
         try {
             String role = jwtConfig.getRoleFromToken(token);
+            Long studentId = jwtConfig.getUserIdFromToken(token);
 
             if (!"STUDENT".equals(role)) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Unauthorized");
+            }
+            boolean enrolled = courseService.isEnrolled(quizService.getById(quizId).getCourse().getId(), studentId);
+            if(!enrolled){
+                return ResponseEntity.status(403).body("You must be enrolled in the course to be able to view its content");
             }
 
             QuizDetailsDTO quizDetails = quizService.getQuizDetails(quizId);
@@ -112,13 +135,22 @@ public class QuizController {
     @PostMapping("/submit")
     public ResponseEntity<?> submitQuiz(@RequestHeader("Authorization") String token, @RequestBody SubmitQuizRequest submissionRequest) {
         String role = jwtConfig.getRoleFromToken(token);
+        Long studentId = jwtConfig.getUserIdFromToken(token);
+
         if (!"STUDENT".equals(role)) {
             return new ResponseEntity<>("Unauthorized", HttpStatus.FORBIDDEN);
         }
-
-        Long studentId = jwtConfig.getUserIdFromToken(token);
+        boolean enrolled = courseService.isEnrolled(quizService.getById(submissionRequest.getQuizId()).getCourse().getId(), studentId);
+        if(!enrolled){
+            return ResponseEntity.status(403).body("You must be enrolled in the course to be able to view its content");
+        }
         submissionRequest.setStudentId(studentId);
-        QuizAttempt attempt = quizService.submitQuiz(submissionRequest);
-        return ResponseEntity.ok("Score: " + attempt.getScore());
+        try {
+            QuizAttempt attempt = quizService.submitQuiz(submissionRequest);
+            return ResponseEntity.ok("Score: " + attempt.getScore());
+        }
+        catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("error: " + e.getMessage());
+        }
     }
 }

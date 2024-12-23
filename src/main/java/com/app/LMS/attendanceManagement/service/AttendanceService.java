@@ -36,4 +36,8 @@ public class AttendanceService {
         return attendanceRepository.findByStudentAndOtp_Course_Id(student, courseId);
     }
 
+    public boolean isMarked(String OtpCode, Long studentId){
+        return attendanceRepository.existsByOtp_CodeAndStudent_Id(OtpCode, studentId);
+    }
+
 }

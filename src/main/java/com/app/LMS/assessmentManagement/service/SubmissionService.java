@@ -63,4 +63,7 @@ public class SubmissionService {
         return submissionRepository.findByAssignmentId(assignmentId);
     }
 
+    public Submission getSubmission(Long submissionId){
+        return submissionRepository.findById(submissionId).orElse(null);
+    }
 }

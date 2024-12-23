@@ -9,6 +9,7 @@ import com.app.LMS.courseManagement.repository.CourseRepository;
 import com.app.LMS.courseManagement.repository.EnrollmentRepository;
 import com.app.LMS.courseManagement.repository.LessonRepository;
 import com.app.LMS.userManagement.repository.UserRepository;
+import com.app.LMS.userManagement.service.UserService;
 import org.springframework.stereotype.Service;
 
 import com.app.LMS.DTO.LessonContentDTO;
@@ -24,17 +25,19 @@ public class CourseService {
     private final EnrollmentRepository enrollmentRepository;
     private final LessonRepository lessonRepository;
     private final UserRepository userRepository;
+    private final UserService userService;
 
-    public CourseService(CourseRepository courseRepository, EnrollmentRepository enrollmentRepository, LessonRepository lessonRepository, UserRepository userRepository)
+    public CourseService(CourseRepository courseRepository, EnrollmentRepository enrollmentRepository, LessonRepository lessonRepository, UserRepository userRepository, UserService userService)
     {
         this.courseRepository = courseRepository;
         this.enrollmentRepository = enrollmentRepository;
         this.lessonRepository = lessonRepository;
         this.userRepository = userRepository;
+        this.userService = userService;
     }
 
     public Course createCourse(Course course, Long instructorId) {
-        User instructor = userRepository.findById(instructorId).orElse(null);
+        User instructor = userService.findById(instructorId).orElse(null);
         if (instructor == null) {
             throw new RuntimeException("Instructor not found");
         }
@@ -149,5 +152,13 @@ public class CourseService {
 
     public void saveCourse(Course course) {
         courseRepository.save(course);
+    }
+
+    public void delete(Course course){
+        courseRepository.delete(course);
+    }
+
+    public boolean isEnrolled(Long courseId, Long studentId){
+        return enrollmentRepository.existsByCourse_IdAndStudent_Id(courseId, studentId);
     }
 }

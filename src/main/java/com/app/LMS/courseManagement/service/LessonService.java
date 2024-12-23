@@ -19,4 +19,12 @@ public class LessonService {
     public Lesson getByID(Long id){
         return lessonRepository.findById(id).orElseThrow(() -> new RuntimeException("Lesson not found with ID: " + id));
     }
+
+    public void delete(Lesson lesson){
+        lessonRepository.delete(lesson);
+    }
+
+    public void save(Lesson lesson){
+        lessonRepository.save(lesson);
+    }
 }

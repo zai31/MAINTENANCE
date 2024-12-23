@@ -27,8 +27,7 @@ public class QuestionBankService {
             throw new IllegalArgumentException("Course not found");
         }
 
-        QuestionBank questionBank = questionBankRepository.findByCourseId(courseId)
-                .orElseGet(() -> {
+        QuestionBank questionBank = questionBankRepository.findByCourseId(courseId).orElseGet(() -> {
                     QuestionBank newBank = new QuestionBank();
                     newBank.setCourse(course);
                     return questionBankRepository.save(newBank);
