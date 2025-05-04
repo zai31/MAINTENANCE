@@ -40,7 +40,7 @@ public class AssessmentController {
             }
         }
 
-        List<QuizAttemptDTO> quizAttempts = performanceService.getQuizAttemptsByStudentId(studentId, courseId);
+      /*  List<QuizAttemptDTO> quizAttempts = performanceService.getQuizAttemptsByStudentId(studentId, courseId);
         List<FeedbackDTO> feedbacks = performanceService.getFeedbacksByStudentId(studentId, courseId);
 
         Map<String, Object> response = new HashMap<>();
@@ -48,5 +48,5 @@ public class AssessmentController {
         response.put("Feedbacks", feedbacks);
 
         return ResponseEntity.ok(response);
-    }
+    }*/
 }
