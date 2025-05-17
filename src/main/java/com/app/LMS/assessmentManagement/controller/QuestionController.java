@@ -34,13 +34,9 @@ public class QuestionController {
         String role = jwtConfig.getRoleFromToken(token);
         Long instructorId = jwtConfig.getUserIdFromToken(token);
 
-        if (!"INSTRUCTOR".equals(role) && !"ADMIN".equals(role)) {
+        if (!("INSTRUCTOR".equals(role) || "ADMIN".equals(role)) ||
+                ("INSTRUCTOR".equals(role) && !courseService.findCourseById(courseId).getInstructor().getId().equals(instructorId))) {
             return new ResponseEntity<>("Unauthorized", HttpStatus.FORBIDDEN);
-        }
-        if("INSTRUCTOR".equals(role)) {
-            if(!courseService.findCourseById(courseId).getInstructor().getId().equals(instructorId)) {
-                return new ResponseEntity<>("Unauthorized: You are not the owner of this course", HttpStatus.FORBIDDEN);
-            }
         }
 
         try {
@@ -57,17 +53,13 @@ public class QuestionController {
     }
 
     @GetMapping("/course/{courseId}")
-    public ResponseEntity<?> getQuestionsByCourse(@RequestHeader("Authorization") String token,@PathVariable Long courseId) {
+    public ResponseEntity<?> getQuestionsByCourse(@RequestHeader("Authorization") String token, @PathVariable Long courseId) {
         String role = jwtConfig.getRoleFromToken(token);
         Long instructorId = jwtConfig.getUserIdFromToken(token);
 
-        if (!"INSTRUCTOR".equals(role) && !"ADMIN".equals(role)) {
+        if (!("INSTRUCTOR".equals(role) || "ADMIN".equals(role)) ||
+                ("INSTRUCTOR".equals(role) && !courseService.findCourseById(courseId).getInstructor().getId().equals(instructorId))) {
             return new ResponseEntity<>("Unauthorized", HttpStatus.FORBIDDEN);
-        }
-        if("INSTRUCTOR".equals(role)) {
-            if(!courseService.findCourseById(courseId).getInstructor().getId().equals(instructorId)) {
-                return new ResponseEntity<>("Unauthorized: You are not the owner of this course", HttpStatus.FORBIDDEN);
-            }
         }
 
         List<Question> questions = questionBankService.getQuestionsByCourse(courseId);
@@ -76,10 +68,10 @@ public class QuestionController {
 
     // Get a question by its ID
     @GetMapping("/{id}")
-    public ResponseEntity<?> getQuestionById(@RequestHeader("Authorization") String token,@PathVariable Long id) {
+    public ResponseEntity<Question> getQuestionById(@RequestHeader("Authorization") String token, @PathVariable Long id) {
         String role = jwtConfig.getRoleFromToken(token);
-        if (!"INSTRUCTOR".equals(role) && !"ADMIN".equals(role)) {
-            return new ResponseEntity<>("Unauthorized", HttpStatus.FORBIDDEN);
+        if (!("INSTRUCTOR".equals(role) || "ADMIN".equals(role))) {
+            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
         }
 
         Question question = questionService.getQuestionById(id);
@@ -91,10 +83,10 @@ public class QuestionController {
 
     // Update an existing question
     @PutMapping("/update/{id}")
-    public ResponseEntity<?> updateQuestion(@RequestHeader("Authorization") String token,@PathVariable Long id, @RequestBody @Valid Question question) {
+    public ResponseEntity<Question> updateQuestion(@RequestHeader("Authorization") String token, @PathVariable Long id, @RequestBody @Valid Question question) {
         String role = jwtConfig.getRoleFromToken(token);
-        if (!"INSTRUCTOR".equals(role) && !"ADMIN".equals(role)) {
-            return new ResponseEntity<>("Unauthorized", HttpStatus.FORBIDDEN);
+        if (!("INSTRUCTOR".equals(role) || "ADMIN".equals(role))) {
+            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
         }
         Question updatedQuestion = questionService.updateQuestion(id, question);
         if (updatedQuestion == null) {
@@ -105,10 +97,10 @@ public class QuestionController {
 
     // Delete a question
     @DeleteMapping("/delete/{id}")
-    public ResponseEntity<?> deleteQuestion(@RequestHeader("Authorization") String token,@PathVariable Long id) {
+    public ResponseEntity<Void> deleteQuestion(@RequestHeader("Authorization") String token, @PathVariable Long id) {
         String role = jwtConfig.getRoleFromToken(token);
-        if (!"INSTRUCTOR".equals(role) && !"ADMIN".equals(role)) {
-            return new ResponseEntity<>("Unauthorized", HttpStatus.FORBIDDEN);
+        if (!("INSTRUCTOR".equals(role) || "ADMIN".equals(role))) {
+            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
         }
 
         if (questionService.deleteQuestion(id)) {

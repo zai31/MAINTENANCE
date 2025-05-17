@@ -4,6 +4,7 @@ import com.app.LMS.assessmentManagement.model.Assignment;
 import com.app.LMS.assessmentManagement.model.Submission;
 import com.app.LMS.assessmentManagement.repository.AssignmentRepository;
 import com.app.LMS.assessmentManagement.repository.SubmissionRepository;
+import com.app.LMS.common.Exceptions.FileStorageException;
 import com.app.LMS.courseManagement.model.Course;
 import com.app.LMS.courseManagement.repository.CourseRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -19,40 +20,34 @@ public class AssignmentService {
 
     private final AssignmentRepository assignmentRepository;
     private final CourseRepository courseRepository;
-    private final SubmissionRepository submissionRepository;
 
-    public AssignmentService(AssignmentRepository assignmentRepository, CourseRepository courseRepository, SubmissionRepository submissionRepository) {
+
+    public AssignmentService(AssignmentRepository assignmentRepository, CourseRepository courseRepository) {
         this.assignmentRepository = assignmentRepository;
         this.courseRepository = courseRepository;
-        this.submissionRepository = submissionRepository;
+
     }
 
     public Assignment createAssignment(Assignment assignment, Long courseId, MultipartFile file) {
-        // Find the course by ID
         Course course = courseRepository.findById(courseId)
                 .orElseThrow(() -> new EntityNotFoundException("Course not found with ID: " + courseId));
 
         assignment.setCourse(course);
-
-        // Save the assignment to get its ID
         Assignment savedAssignment = assignmentRepository.save(assignment);
 
-        // Define file upload path
         String uploadDir = System.getProperty("user.dir") + "/uploads/courses/" + courseId + "/assignments/" + savedAssignment.getId();
         File directory = new File(uploadDir);
         if (!directory.exists()) {
             directory.mkdirs();
         }
 
-        // Save file to the directory
         String filePath = uploadDir + "/" + file.getOriginalFilename();
         try {
             file.transferTo(new File(filePath));
         } catch (IOException e) {
-            throw new RuntimeException("Failed to save file: " + e.getMessage());
+            throw new FileStorageException("Failed to save file to path: " + filePath, e);
         }
 
-        // Update the assignment with the file path
         savedAssignment.setFilePath(filePath);
         return assignmentRepository.save(savedAssignment);
     }

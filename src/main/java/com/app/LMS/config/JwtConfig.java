@@ -1,5 +1,6 @@
 package com.app.LMS.config;
 
+import com.app.LMS.common.Exceptions.FileStorageException.InvalidTokenException;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -15,10 +16,10 @@ import java.util.Date;
 public class JwtConfig {
 
     @Value("${jwt.secret}")
-    private String secret; // Loaded from application.properties
+    private String secret;
 
     @Value("${jwt.expiration}")
-    private long expirationTime; // Loaded from application.properties
+    private long expirationTime;
 
     private Key getSigningKey() {
         byte[] decodedKey = Base64.getDecoder().decode(secret);
@@ -40,42 +41,46 @@ public class JwtConfig {
             Jwts.parserBuilder()
                     .setSigningKey(getSigningKey())
                     .build()
-                    .parseClaimsJws(token);
+                    .parseClaimsJws(cleanToken(token));
             return true;
-        } catch (Exception e) {
+        } catch (JwtException e) {
             return false;
         }
     }
 
     public Long getUserIdFromToken(String token) {
         try {
-            // Trim whitespace and remove the "Bearer " prefix if it exists
-            token = token.trim();
-            if (token.startsWith("Bearer ")) {
-                token = token.substring(7).trim();
-            }
-            return Long.valueOf(Jwts.parserBuilder()
-                    .setSigningKey(getSigningKey())
-                    .build()
-                    .parseClaimsJws(token)
-                    .getBody()
-                    .getSubject());
-        } catch (JwtException e) {
-            throw new RuntimeException("Invalid or expired token", e);
+            return Long.valueOf(
+                    Jwts.parserBuilder()
+                            .setSigningKey(getSigningKey())
+                            .build()
+                            .parseClaimsJws(cleanToken(token))
+                            .getBody()
+                            .getSubject()
+            );
+        } catch (JwtException | NumberFormatException e) {
+            throw new InvalidTokenException("Invalid or expired token", e);
         }
     }
 
     public String getRoleFromToken(String token) {
-        // Trim whitespace and remove the "Bearer " prefix if it exists
+        try {
+            return Jwts.parserBuilder()
+                    .setSigningKey(getSigningKey())
+                    .build()
+                    .parseClaimsJws(cleanToken(token))
+                    .getBody()
+                    .get("role", String.class);
+        } catch (JwtException e) {
+            throw new InvalidTokenException("Invalid token when extracting role", e);
+        }
+    }
+
+    private String cleanToken(String token) {
         token = token.trim();
         if (token.startsWith("Bearer ")) {
             token = token.substring(7).trim();
         }
-        return Jwts.parserBuilder()
-                .setSigningKey(getSigningKey())
-                .build()
-                .parseClaimsJws(token)
-                .getBody()
-                .get("role", String.class);
+        return token;
     }
 }
