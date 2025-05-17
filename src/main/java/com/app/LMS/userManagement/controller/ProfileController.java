@@ -24,38 +24,37 @@ public class ProfileController {
 
     // Get profile information
     @GetMapping("/view")
-    public ResponseEntity<?> getProfile(@RequestHeader("Authorization") String token) {
+    public ResponseEntity<ProfileDTO> getProfile(@RequestHeader("Authorization") String token) {
         Long id = jwtConfig.getUserIdFromToken(token);
-
         Optional<User> user = userService.findById(id);
+
         if (user.isEmpty()) {
-            return new ResponseEntity<>("User not found", HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(null, HttpStatus.NOT_FOUND);
         }
-        ProfileDTO profileResponse = new ProfileDTO(user.get().getFirstName(), user.get().getLastName(), user.get().getEmail());
+
+        ProfileDTO profileResponse = new ProfileDTO(
+                user.get().getFirstName(),
+                user.get().getLastName(),
+                user.get().getEmail()
+        );
+
         return new ResponseEntity<>(profileResponse, HttpStatus.OK);
     }
 
     // Update profile information
     @PatchMapping("/update")
-    public ResponseEntity<?> updateProfile(@RequestHeader("Authorization") String token, @RequestBody ProfileDTO updateProfileRequest) {
-
+    public ResponseEntity<String> updateProfile(@RequestHeader("Authorization") String token, @RequestBody ProfileDTO updateProfileRequest) {
         Long id = jwtConfig.getUserIdFromToken(token);
-
         Optional<User> user = userService.findById(id);
+
         if (user.isEmpty()) {
             return new ResponseEntity<>("User not found", HttpStatus.NOT_FOUND);
         }
 
         // Update the profile information
-        if (updateProfileRequest.getFirstName() != null) {
-            user.get().setFirstName(updateProfileRequest.getFirstName());
-        }
-        if (updateProfileRequest.getLastName() != null) {
-            user.get().setLastName(updateProfileRequest.getLastName());
-        }
-        if (updateProfileRequest.getEmail() != null) {
-            user.get().setEmail(updateProfileRequest.getEmail());
-        }
+        user.get().setFirstName(updateProfileRequest.getFirstName() != null ? updateProfileRequest.getFirstName() : user.get().getFirstName());
+        user.get().setLastName(updateProfileRequest.getLastName() != null ? updateProfileRequest.getLastName() : user.get().getLastName());
+        user.get().setEmail(updateProfileRequest.getEmail() != null ? updateProfileRequest.getEmail() : user.get().getEmail());
 
         userService.saveUser(user.get());
 

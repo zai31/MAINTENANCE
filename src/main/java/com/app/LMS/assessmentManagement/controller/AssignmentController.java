@@ -1,6 +1,7 @@
 package com.app.LMS.assessmentManagement.controller;
 
 import com.app.LMS.DTO.FeedbackRequest;
+import com.app.LMS.common.Constants;
 import com.app.LMS.assessmentManagement.model.Assignment;
 import com.app.LMS.assessmentManagement.model.Feedback;
 import com.app.LMS.assessmentManagement.model.Submission;
@@ -52,8 +53,8 @@ public class AssignmentController {
 
         String role = jwtConfig.getRoleFromToken(token);
         Long instructorId = jwtConfig.getUserIdFromToken(token);
-        if (!"INSTRUCTOR".equals(role)) {
-            return new ResponseEntity<>("Unauthorized", HttpStatus.FORBIDDEN);
+        if (!Constants.ROLE_INSTRUCTOR.equals(role)) {
+            return new ResponseEntity<>(Constants.UNAUTHORIZED, HttpStatus.FORBIDDEN);
         }
         Course course = courseService.findCourseById(courseId);
         if (!course.getInstructor().getId().equals(instructorId)) {
@@ -89,8 +90,8 @@ public class AssignmentController {
         String role = jwtConfig.getRoleFromToken(token);
         Long studentId = jwtConfig.getUserIdFromToken(token);
 
-        if (!"STUDENT".equals(role)) {
-            return new ResponseEntity<>("Unauthorized", HttpStatus.FORBIDDEN);
+        if (!Constants.ROLE_STUDENT.equals(role)) {
+            return new ResponseEntity<>(Constants.UNAUTHORIZED, HttpStatus.FORBIDDEN);
         }
         Assignment assignment = assignmentService.getAssignmentById(assignmentId);
         boolean enrolled = courseService.isEnrolled(assignment.getCourse().getId(), studentId);
@@ -107,46 +108,48 @@ public class AssignmentController {
     }
 
     @GetMapping("/course/{courseId}")
-    public ResponseEntity<?> getAllAssignments(@RequestHeader("Authorization") String token, @PathVariable Long courseId) {
+    public ResponseEntity<List<Assignment>> getAllAssignments(@RequestHeader("Authorization") String token, @PathVariable Long courseId) {
         String role = jwtConfig.getRoleFromToken(token);
         Long studentId = jwtConfig.getUserIdFromToken(token);
 
-        if (!"STUDENT".equals(role)) {
-            return new ResponseEntity<>("Unauthorized", HttpStatus.FORBIDDEN);
+        if (!Constants.ROLE_STUDENT.equals(role)) {
+            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
         }
         boolean enrolled = courseService.isEnrolled(courseId, studentId);
         if(!enrolled){
-            return ResponseEntity.status(403).body("You must be enrolled in the course to be able to view its content");
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
         List<Assignment> assignments = assignmentService.getAllAssignments(courseId);
-        return new ResponseEntity<>(assignments, HttpStatus.OK);
+        return ResponseEntity.ok(assignments);
     }
 
+
     @GetMapping("/submission/{assignmentId}")
-    public ResponseEntity<?> getAllSubmissions(@RequestHeader("Authorization") String token, @PathVariable Long assignmentId) {
+    public ResponseEntity<List<Submission>> getAllSubmissions(@RequestHeader("Authorization") String token, @PathVariable Long assignmentId) {
         String role = jwtConfig.getRoleFromToken(token);
         Long instructorId = jwtConfig.getUserIdFromToken(token);
 
-        if (!"INSTRUCTOR".equals(role)) {
-            return new ResponseEntity<>("Unauthorized", HttpStatus.FORBIDDEN);
+        if (!Constants.ROLE_INSTRUCTOR.equals(role)) {
+            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
         }
         Assignment assignment = assignmentService.getAssignmentById(assignmentId);
         if(!assignment.getCourse().getInstructor().getId().equals(instructorId)){
-            return new ResponseEntity<>("Unauthorized: You do not own this course", HttpStatus.FORBIDDEN);
+            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
         }
 
         List<Submission> submissions = submissionService.getAllSubmissions(assignmentId);
-        return new ResponseEntity<>(submissions, HttpStatus.OK);
+        return ResponseEntity.ok(submissions);
     }
+
 
     @GetMapping("/feedback/create")
     public ResponseEntity<String> createFeedback(@RequestHeader("Authorization") String token, @RequestBody FeedbackRequest feedbackRequest) {
         String role = jwtConfig.getRoleFromToken(token);
         Long instructorId = jwtConfig.getUserIdFromToken(token);
 
-        if (!"INSTRUCTOR".equals(role)) {
-            return new ResponseEntity<>("Unauthorized", HttpStatus.FORBIDDEN);
+        if (!Constants.ROLE_INSTRUCTOR.equals(role)) {
+            return new ResponseEntity<>(Constants.UNAUTHORIZED, HttpStatus.FORBIDDEN);
         }
         Course course = submissionService.getSubmission(feedbackRequest.getSubmissionID()).getAssignment().getCourse();
         if(!course.getInstructor().getId().equals(instructorId)){
@@ -167,26 +170,26 @@ public class AssignmentController {
     }
 
     @GetMapping("/feedback/{submissionId}")
-    public ResponseEntity<?> getFeedback(@RequestHeader("Authorization") String token, @PathVariable Long submissionId) {
+    public ResponseEntity<FeedbackRequest> getFeedback(@RequestHeader("Authorization") String token, @PathVariable Long submissionId) {
 
         String role = jwtConfig.getRoleFromToken(token);
         Long studentId = jwtConfig.getUserIdFromToken(token);
 
-        if (!"STUDENT".equals(role)) {
-            return new ResponseEntity<>("Unauthorized", HttpStatus.FORBIDDEN);
+        if (!Constants.ROLE_STUDENT.equals(role)) {
+            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
         }
         if(!submissionService.getSubmission(submissionId).getStudent().getId().equals(studentId)){
-            return new ResponseEntity<>("Unauthorized: You are not authorized to view this feedback", HttpStatus.FORBIDDEN);
+            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
         }
 
         try {
             FeedbackRequest feedback = feedbackService.getFeedbackBySubmission(submissionId);
             if (feedback == null) {
-                return new ResponseEntity<>("Feedback not found", HttpStatus.NOT_FOUND);
+                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
             }
-            return new ResponseEntity<>(feedback, HttpStatus.OK);
+            return ResponseEntity.ok(feedback);
         } catch (Exception e) {
-            return new ResponseEntity<>("Error: " + e.getMessage(), HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
     }
 
