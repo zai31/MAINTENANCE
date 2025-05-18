@@ -41,6 +41,8 @@ public class QuizController {
     private final EventBus eventBus;
     private final CourseService courseService;
 
+
+
     QuizController(QuizService quizService, JwtConfig jwtConfig, EventBus eventBus, CourseService courseService) {
         this.quizService = quizService;
         this.jwtConfig = jwtConfig;
@@ -55,10 +57,11 @@ public class QuizController {
         Long instructorId = jwtConfig.getUserIdFromToken(token);
 
         if (!Constants.ROLE_INSTRUCTOR.equals(role)) {
-            return new ResponseEntity<>("Unauthorized", HttpStatus.FORBIDDEN);
+            return new ResponseEntity<>(Constants.UNAUTHORIZED_MESSAGE, HttpStatus.FORBIDDEN);
+
         }
         if(!courseService.findCourseById(request.getCourseID()).getInstructor().getId().equals(instructorId)){
-            return new ResponseEntity<>("Unauthorized: You are not the owner of this course", HttpStatus.FORBIDDEN);
+            return new ResponseEntity<>(Constants.UNAUTHORIZED_MESSAGE, HttpStatus.FORBIDDEN);
         }
 
         Quiz quiz = quizService.createQuiz(request);
@@ -75,7 +78,7 @@ public class QuizController {
         Long instructorId = jwtConfig.getUserIdFromToken(token);
 
         if (!Constants.ROLE_INSTRUCTOR.equals(role)) {
-            return new ResponseEntity<>("Unauthorized", HttpStatus.FORBIDDEN);
+            return new ResponseEntity<>(Constants.UNAUTHORIZED_MESSAGE, HttpStatus.FORBIDDEN);
         }
         if(!courseService.findCourseById(updatedQuizRequest.getCourseID()).getInstructor().getId().equals(instructorId)){
             return new ResponseEntity<>("Unauthorized: You are not the owner of this course", HttpStatus.FORBIDDEN);
@@ -95,7 +98,7 @@ public class QuizController {
         Long instructorId = jwtConfig.getUserIdFromToken(token);
 
         if (!Constants.ROLE_INSTRUCTOR.equals(role)) {
-            return new ResponseEntity<>("Unauthorized", HttpStatus.FORBIDDEN);
+            return new ResponseEntity<>(Constants.UNAUTHORIZED_MESSAGE, HttpStatus.FORBIDDEN);
         }
         if(!courseService.findCourseById(courseId).getInstructor().getId().equals(instructorId)){
             return new ResponseEntity<>("Unauthorized: You are not the owner of this course", HttpStatus.FORBIDDEN);
@@ -151,7 +154,7 @@ public class QuizController {
         Long studentId = jwtConfig.getUserIdFromToken(token);
 
         if (!Constants.ROLE_STUDENT.equals(role)) {
-            return new ResponseEntity<>("Unauthorized", HttpStatus.FORBIDDEN);
+            return new ResponseEntity<>(Constants.UNAUTHORIZED_MESSAGE, HttpStatus.FORBIDDEN);
         }
         boolean enrolled = courseService.isEnrolled(quizService.getById(submissionRequest.getQuizId()).getCourse().getId(), studentId);
         if(!enrolled){
@@ -173,13 +176,13 @@ public class QuizController {
     }
     // Auto-save quiz progress
     @PostMapping("/autosave")
-    public ResponseEntity<?> autoSaveQuiz(@RequestHeader("Authorization") String token,
+    public ResponseEntity<String> autoSaveQuiz(@RequestHeader("Authorization") String token,
                                           @RequestBody SubmitQuizRequest autoSaveRequest) {
         String role = jwtConfig.getRoleFromToken(token);
         Long studentId = jwtConfig.getUserIdFromToken(token);
 
         if (!"STUDENT".equals(role)) {
-            return new ResponseEntity<>("Unauthorized", HttpStatus.FORBIDDEN);
+            return new ResponseEntity<>(Constants.UNAUTHORIZED_MESSAGE, HttpStatus.FORBIDDEN);
         }
 
         boolean enrolled = courseService.isEnrolled(

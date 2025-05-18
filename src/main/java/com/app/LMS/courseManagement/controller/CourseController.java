@@ -13,7 +13,6 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.beans.factory.annotation.Autowired;
 import com.app.LMS.config.JwtConfig;
 import com.app.LMS.courseManagement.service.CourseService;
 import com.app.LMS.courseManagement.service.MediaService;
@@ -25,7 +24,6 @@ import jakarta.validation.Valid;
 @RequestMapping("/api/course")
 public class CourseController {
     private final CourseService courseService;
-    @Autowired
     private final MediaService mediaService;
     private final JwtConfig jwtConfig;
     private final LessonService lessonService;
