@@ -1,9 +1,8 @@
 package com.app.LMS.notificationManagement.notification;
 
 import com.app.LMS.DTO.NotificationDTO;
-import com.app.LMS.common.Exceptions.FileStorageException;
+import com.app.LMS.common.Exceptions.dedicatedException;
 import com.app.LMS.config.JwtConfig;
-import jakarta.validation.constraints.Null;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -30,7 +29,7 @@ public class NotificationController {
             Long userId = jwtConfig.getUserIdFromToken(token);
             List<NotificationDTO> notifications = notificationService.getNotifications(userId, read);
             return new ResponseEntity<>(notifications, HttpStatus.OK);
-        } catch (FileStorageException.UnauthorizedActionException e) {
+        } catch (dedicatedException.UnauthorizedActionException e) {
             return new ResponseEntity<>(null, HttpStatus.UNAUTHORIZED);
         } catch (RuntimeException e) {
             return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);

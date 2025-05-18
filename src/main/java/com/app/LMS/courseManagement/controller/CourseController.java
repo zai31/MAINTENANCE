@@ -1,43 +1,51 @@
 package com.app.LMS.courseManagement.controller;
+
 import java.util.List;
 import com.app.LMS.DTO.*;
 import com.app.LMS.common.Constants;
-import com.app.LMS.common.Exceptions.FileStorageException;
+import com.app.LMS.common.Exceptions.dedicatedException;
 import com.app.LMS.courseManagement.service.LessonService;
 import com.app.LMS.notificationManagement.eventBus.EventBus;
 import com.app.LMS.notificationManagement.eventBus.events.AddedLessonEvent;
-import com.app.LMS.notificationManagement.eventBus.events.EnrollmentEvent;
 import com.app.LMS.notificationManagement.eventBus.events.MaterialUploadedEvent;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.beans.factory.annotation.Autowired;
 import com.app.LMS.config.JwtConfig;
-import com.app.LMS.courseManagement.model.Course;
-import com.app.LMS.courseManagement.model.Lesson;
 import com.app.LMS.courseManagement.service.CourseService;
 import com.app.LMS.courseManagement.service.MediaService;
+import com.app.LMS.courseManagement.model.Course;
+import com.app.LMS.courseManagement.model.Lesson;
 import jakarta.validation.Valid;
-
 
 @RestController
 @RequestMapping("/api/course")
 public class CourseController {
     private final CourseService courseService;
-    private final MediaService mediaservice;
+    @Autowired
+    private final MediaService mediaService;
     private final JwtConfig jwtConfig;
     private final LessonService lessonService;
     private final EventBus eventBus;
-    private final Constants constants;
-    public CourseController(CourseService courseService, MediaService mediaservice, JwtConfig jwtConfig, LessonService lessonService, EventBus eventBus, Constants constants)
+
+    private boolean isInstructorAuthorized(String role, Long instructorId, Long courseId) {
+        if (!Constants.ROLE_INSTRUCTOR.equals(role)) {
+            return true;
+        }
+        Course course = courseService.findCourseById(courseId);
+        return course != null && course.getInstructor().getId().equals(instructorId);
+    }
+
+    public CourseController(CourseService courseService, MediaService mediaservice, JwtConfig jwtConfig, LessonService lessonService, EventBus eventBus)
     {
         this.courseService = courseService;
-        this.mediaservice = mediaservice;
+        this.mediaService = mediaservice;
         this.jwtConfig = jwtConfig;
         this.lessonService = lessonService;
         this.eventBus = eventBus;
-        this.constants = constants;
     }
 
     @PostMapping("/create")
@@ -101,21 +109,18 @@ public class CourseController {
             Long instructorId = jwtConfig.getUserIdFromToken(token);
 
             // Ensure that the role is INSTRUCTOR
-            if (!"INSTRUCTOR".equals(role) && !"ADMIN".equals(role)) {
-                return new ResponseEntity<>("Unauthorized: You need to be an Instructor or an Admin", HttpStatus.FORBIDDEN);
+            if (!Constants.ROLE_INSTRUCTOR.equals(role) && !Constants.ROLE_ADMIN.equals(role)) {
+                return new ResponseEntity<>(Constants.UNAUTHORIZED, HttpStatus.FORBIDDEN);
             }
 
             // Retrieve the course from the database
             Course course = courseService.findCourseById(courseId);
             if (course == null) {
-                throw new FileStorageException.CourseNotFoundException("Course not found with id: " + courseId);
+                throw new dedicatedException.CourseNotFoundException("Course not found with id: " + courseId);
             }
 
-            if (Constants.ROLE_INSTRUCTOR.equals(role)) {
-                // Check if the instructor owns the course
-                if (!course.getInstructor().getId().equals(instructorId)) {
-                    return new ResponseEntity<>("Unauthorized: You are not the owner of this course", HttpStatus.FORBIDDEN);
-                }
+            if (Constants.ROLE_INSTRUCTOR.equals(role) && !course.getInstructor().getId().equals(instructorId)) {
+                return new ResponseEntity<>(Constants.UNAUTHORIZED_COURSE_ACCESS, HttpStatus.FORBIDDEN);
             }
 
             // Update the course details only for the provided fields
@@ -133,9 +138,9 @@ public class CourseController {
             courseService.saveCourse(course);
 
             return new ResponseEntity<>("Course updated successfully", HttpStatus.OK);
-        } catch (FileStorageException.CourseNotFoundException e) {
+        } catch (dedicatedException.CourseNotFoundException e) {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
-        } catch (FileStorageException.UnauthorizedActionException e) {
+        } catch (dedicatedException.UnauthorizedActionException e) {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.FORBIDDEN);
         } catch (Exception e) {
             return new ResponseEntity<>("Error editing course: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
@@ -151,31 +156,28 @@ public class CourseController {
             Long instructorId = jwtConfig.getUserIdFromToken(token);
 
             // Ensure that the role is INSTRUCTOR
-            if (!"INSTRUCTOR".equals(role) && !"ADMIN".equals(role)) {
-                return new ResponseEntity<>("Unauthorized: You need to be an Instructor or an Admin", HttpStatus.FORBIDDEN);
+            if (!Constants.ROLE_INSTRUCTOR.equals(role) && !Constants.ROLE_ADMIN.equals(role)) {
+                return new ResponseEntity<>(Constants.UNAUTHORIZED, HttpStatus.FORBIDDEN);
             }
 
             // Retrieve the course from the database
             Course course = courseService.findCourseById(courseId);
             if (course == null) {
-                throw new FileStorageException.CourseNotFoundException("Course not found with id: " + courseId);
+                throw new dedicatedException.CourseNotFoundException("Course not found with id: " + courseId);
             }
 
             // Check if the instructor owns the course
-            if (Constants.ROLE_INSTRUCTOR.equals(role)) {
-                // Check if the instructor owns the course
-                if (!course.getInstructor().getId().equals(instructorId)) {
-                    return new ResponseEntity<>("Unauthorized: You are not the owner of this course", HttpStatus.FORBIDDEN);
-                }
+            if (Constants.ROLE_INSTRUCTOR.equals(role) && !course.getInstructor().getId().equals(instructorId)) {
+                return new ResponseEntity<>(Constants.UNAUTHORIZED_COURSE_ACCESS, HttpStatus.FORBIDDEN);
             }
 
             // Delete the course
             courseService.delete(course);
 
             return new ResponseEntity<>("Course deleted successfully", HttpStatus.OK);
-        } catch (FileStorageException.CourseNotFoundException e) {
+        } catch (dedicatedException.CourseNotFoundException e) {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
-        } catch (FileStorageException.UnauthorizedActionException e) {
+        } catch (dedicatedException.UnauthorizedActionException e) {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.FORBIDDEN);
         } catch (Exception e) {
             return new ResponseEntity<>("Error deleting course: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
@@ -195,12 +197,12 @@ public class CourseController {
                 // Retrieve the course from the database using courseId
                 Course course = courseService.findCourseById(courseId);
                 if (course == null) {
-                    throw new FileStorageException.CourseNotFoundException("Course not found with id: " + courseId);
+                    throw new dedicatedException.CourseNotFoundException("Course not found with id: " + courseId);
                 }
 
                 // Check if the current instructor owns the course
                 if (!course.getInstructor().getId().equals(instructorId)) {
-                    return new ResponseEntity<>("Unauthorized: You do not own this course", HttpStatus.FORBIDDEN);
+                    return new ResponseEntity<>(Constants.UNAUTHORIZED_COURSE_ACCESS, HttpStatus.FORBIDDEN);
                 }
 
                 // Create a new Lesson entity from the request
@@ -222,9 +224,9 @@ public class CourseController {
             } else {
                 return new ResponseEntity<>(Constants.UNAUTHORIZED, HttpStatus.FORBIDDEN);
             }
-        } catch (FileStorageException.CourseNotFoundException e) {
+        } catch (dedicatedException.CourseNotFoundException e) {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
-        } catch (FileStorageException.UnauthorizedActionException e) {
+        } catch (dedicatedException.UnauthorizedActionException e) {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.FORBIDDEN);
         } catch (Exception e) {
             return new ResponseEntity<>("Error adding lesson: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
@@ -240,24 +242,24 @@ public class CourseController {
             Long instructorId = jwtConfig.getUserIdFromToken(token);
 
             // Ensure the user has the right role
-            if (!"INSTRUCTOR".equals(role) && !"ADMIN".equals(role)) {
-                return new ResponseEntity<>("Unauthorized: You must be an instructor or admin", HttpStatus.FORBIDDEN);
+            if (!Constants.ROLE_INSTRUCTOR.equals(role) && !Constants.ROLE_ADMIN.equals(role)) {
+                return new ResponseEntity<>(Constants.UNAUTHORIZED, HttpStatus.FORBIDDEN);
             }
 
             // Retrieve the course and lesson
             Course course = courseService.findCourseById(courseId);
             if (course == null) {
-                throw new FileStorageException.CourseNotFoundException("Course not found with id: " + courseId);
+                throw new dedicatedException.CourseNotFoundException("Course not found with id: " + courseId);
             }
 
             Lesson lesson = lessonService.getByID(lessonId);
             if (lesson == null) {
-                throw new FileStorageException.LessonNotFoundException("Lesson not found with id: " + lessonId);
+                throw new dedicatedException.LessonNotFoundException("Lesson not found with id: " + lessonId);
             }
 
             // Check if the instructor owns the course
-            if (!course.getInstructor().getId().equals(instructorId)) {
-                return new ResponseEntity<>("Unauthorized: You do not own this course", HttpStatus.FORBIDDEN);
+            if (!Constants.ROLE_ADMIN.equals(role) && !isInstructorAuthorized(role, instructorId, courseId)) {
+                return new ResponseEntity<>(Constants.UNAUTHORIZED_COURSE_ACCESS, HttpStatus.FORBIDDEN);
             }
 
             // Update the lesson details based on the provided request body
@@ -272,9 +274,9 @@ public class CourseController {
             lessonService.save(lesson);
 
             return new ResponseEntity<>("Lesson updated successfully", HttpStatus.OK);
-        } catch (FileStorageException.LessonNotFoundException | FileStorageException.CourseNotFoundException e) {
+        } catch (dedicatedException.LessonNotFoundException | dedicatedException.CourseNotFoundException e) {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
-        } catch (FileStorageException.UnauthorizedActionException e) {
+        } catch (dedicatedException.UnauthorizedActionException e) {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.FORBIDDEN);
         } catch (Exception e) {
             return new ResponseEntity<>("Error editing lesson: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
@@ -290,23 +292,18 @@ public class CourseController {
             Long instructorId = jwtConfig.getUserIdFromToken(token);
 
             // Ensure the user has the right role
-            if (!"INSTRUCTOR".equals(role) && !"ADMIN".equals(role)) {
-                return new ResponseEntity<>("Unauthorized: You must be an instructor or admin", HttpStatus.FORBIDDEN);
+            if (!Constants.ROLE_INSTRUCTOR.equals(role) && !Constants.ROLE_ADMIN.equals(role)) {
+                return new ResponseEntity<>(Constants.UNAUTHORIZED, HttpStatus.FORBIDDEN);
             }
-
-            // Retrieve the course and lesson
-            Course course = courseService.findCourseById(courseId);
 
             Lesson lesson = lessonService.getByID(lessonId);
             if (lesson == null) {
-                throw new FileStorageException.LessonNotFoundException("Lesson not found with id: " + lessonId);
+                throw new dedicatedException.LessonNotFoundException("Lesson not found with id: " + lessonId);
             }
 
             // Check if the instructor owns the course
-            if (Constants.ROLE_INSTRUCTOR.equals(role)) {
-                if (!course.getInstructor().getId().equals(instructorId)) {
-                    return new ResponseEntity<>("Unauthorized: You do not own this course", HttpStatus.FORBIDDEN);
-                }
+            if (!Constants.ROLE_ADMIN.equals(role) && !isInstructorAuthorized(role, instructorId, courseId)) {
+                return new ResponseEntity<>(Constants.UNAUTHORIZED_COURSE_ACCESS, HttpStatus.FORBIDDEN);
             }
 
 
@@ -328,19 +325,17 @@ public class CourseController {
             String role = jwtConfig.getRoleFromToken(token);
             Long instructorId = jwtConfig.getUserIdFromToken(token);
 
-            if (!"INSTRUCTOR".equals(role) && !"ADMIN".equals(role)) {
+            if (!Constants.ROLE_INSTRUCTOR.equals(role) && !Constants.ROLE_ADMIN.equals(role)) {
                 return new ResponseEntity<>(Constants.UNAUTHORIZED, HttpStatus.FORBIDDEN);
             }
 
             Lesson lesson = lessonService.getByID(lessonId);
-            if (Constants.ROLE_INSTRUCTOR.equals(role)) {
-                if (!lesson.getCourse().getInstructor().getId().equals(instructorId)) {
-                    return new ResponseEntity<>("Unauthorized: You do not own this course", HttpStatus.FORBIDDEN);
-                }
+            if (!Constants.ROLE_ADMIN.equals(role) && !isInstructorAuthorized(role, instructorId, lesson.getCourse().getId())) {
+                return new ResponseEntity<>(Constants.UNAUTHORIZED_COURSE_ACCESS, HttpStatus.FORBIDDEN);
             }
 
             // Use MediaService to handle the file upload
-            String response = mediaservice.uploadFile(lessonId, file);
+            String response = mediaService.uploadFile(lessonId, file);
 
             if ("Lesson not found".equals(response)) {
                 return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
@@ -373,14 +368,11 @@ public class CourseController {
         Course course = lessonService.getByID(id).getCourse();
         boolean enrolled = courseService.isEnrolled(course.getId(), studentId);
 
-        // Replace in getLessonContent
-        if (!Constants.ROLE_STUDENT.equals(role) || !enrolled) {
-            throw new FileStorageException.UnauthorizedActionException("Only enrolled students can view lesson content.");
+        if (Constants.ROLE_STUDENT.equals(role) && enrolled) {
+            LessonContentDTO lesson = courseService.getLesson(id);
+            return ResponseEntity.ok(lesson);
         }
-
-
-        LessonContentDTO lesson = courseService.getLesson(id);
-        return ResponseEntity.ok(lesson);
+        throw new dedicatedException.UnauthorizedActionException("Only enrolled students can view lesson content.");
     }
 
 

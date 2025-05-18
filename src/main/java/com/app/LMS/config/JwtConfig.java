@@ -1,6 +1,6 @@
 package com.app.LMS.config;
 
-import com.app.LMS.common.Exceptions.FileStorageException.InvalidTokenException;
+import com.app.LMS.common.Exceptions.dedicatedException.InvalidTokenException;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;

@@ -1,6 +1,5 @@
 package com.app.LMS.DTO;
 import java.util.List;
-import com.app.LMS.DTO.LessonContentDTO;
 
 public class CourseContentDTO {
     private Long id;

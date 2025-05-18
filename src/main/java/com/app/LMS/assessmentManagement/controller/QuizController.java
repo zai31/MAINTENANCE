@@ -22,6 +22,10 @@ import com.app.LMS.DTO.SubmitQuizRequest;
 import com.app.LMS.assessmentManagement.model.Quiz;
 import com.app.LMS.assessmentManagement.model.QuizAttempt;
 import com.app.LMS.assessmentManagement.service.QuizService;
+import com.app.LMS.common.Constants;
+import com.app.LMS.common.Exceptions.dedicatedException.QuizNotFoundException;
+import com.app.LMS.common.Exceptions.dedicatedException.UnauthorizedActionException;
+import com.app.LMS.common.Exceptions.dedicatedException.InvalidQuizSubmissionException;
 import com.app.LMS.config.JwtConfig;
 import com.app.LMS.notificationManagement.eventBus.EventBus;
 import com.app.LMS.notificationManagement.eventBus.events.QuizCreatedEvent;
@@ -46,11 +50,11 @@ public class QuizController {
 
     // Create a new Quiz
     @PostMapping("/create")
-    public ResponseEntity<?> createQuiz(@RequestHeader("Authorization") String token, @RequestBody @Valid QuizRequest request) {
+    public ResponseEntity<String> createQuiz(@RequestHeader("Authorization") String token, @RequestBody @Valid QuizRequest request) {
         String role = jwtConfig.getRoleFromToken(token);
         Long instructorId = jwtConfig.getUserIdFromToken(token);
 
-        if (!"INSTRUCTOR".equals(role)) {
+        if (!Constants.ROLE_INSTRUCTOR.equals(role)) {
             return new ResponseEntity<>("Unauthorized", HttpStatus.FORBIDDEN);
         }
         if(!courseService.findCourseById(request.getCourseID()).getInstructor().getId().equals(instructorId)){
@@ -66,11 +70,11 @@ public class QuizController {
 
     // Update Quiz details
     @PutMapping("/update/{id}")
-    public ResponseEntity<?> updateQuiz(@RequestHeader("Authorization") String token, @PathVariable Long id, @RequestBody @Valid QuizRequest updatedQuizRequest) {
+    public ResponseEntity<Object> updateQuiz(@RequestHeader("Authorization") String token, @PathVariable Long id, @RequestBody @Valid QuizRequest updatedQuizRequest) {
         String role = jwtConfig.getRoleFromToken(token);
         Long instructorId = jwtConfig.getUserIdFromToken(token);
 
-        if (!"INSTRUCTOR".equals(role)) {
+        if (!Constants.ROLE_INSTRUCTOR.equals(role)) {
             return new ResponseEntity<>("Unauthorized", HttpStatus.FORBIDDEN);
         }
         if(!courseService.findCourseById(updatedQuizRequest.getCourseID()).getInstructor().getId().equals(instructorId)){
@@ -86,11 +90,11 @@ public class QuizController {
 
     // Get all quizzes for a specific course
     @GetMapping("/list")
-    public ResponseEntity<?> getQuizzesByCourse(@RequestHeader("Authorization") String token, @RequestParam Long courseId) {
+    public ResponseEntity<Object> getQuizzesByCourse(@RequestHeader("Authorization") String token, @RequestParam Long courseId) {
         String role = jwtConfig.getRoleFromToken(token);
         Long instructorId = jwtConfig.getUserIdFromToken(token);
 
-        if (!"INSTRUCTOR".equals(role)) {
+        if (!Constants.ROLE_INSTRUCTOR.equals(role)) {
             return new ResponseEntity<>("Unauthorized", HttpStatus.FORBIDDEN);
         }
         if(!courseService.findCourseById(courseId).getInstructor().getId().equals(instructorId)){
@@ -106,38 +110,47 @@ public class QuizController {
 
     // Get quiz details by ID
     @GetMapping("/{quizId}")
-    public ResponseEntity<?> getQuiz(@RequestHeader("Authorization") String token, @PathVariable Long quizId) {
+    public ResponseEntity<Object> getQuiz(@RequestHeader("Authorization") String token, @PathVariable Long quizId) {
         try {
             String role = jwtConfig.getRoleFromToken(token);
             Long studentId = jwtConfig.getUserIdFromToken(token);
 
-            if (!"STUDENT".equals(role)) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Unauthorized");
+            if (!Constants.ROLE_STUDENT.equals(role)) {
+                throw new UnauthorizedActionException("Only students can view quiz details");
             }
-            boolean enrolled = courseService.isEnrolled(quizService.getById(quizId).getCourse().getId(), studentId);
-            if(!enrolled){
-                return ResponseEntity.status(403).body("You must be enrolled in the course to be able to view its content");
+            
+            Quiz quiz = quizService.getById(quizId);
+            if (quiz == null) {
+                throw new QuizNotFoundException("Quiz not found with ID: " + quizId);
+            }
+            
+            boolean enrolled = courseService.isEnrolled(quiz.getCourse().getId(), studentId);
+            if (!enrolled) {
+                throw new UnauthorizedActionException("You must be enrolled in the course to view its content");
             }
 
             QuizDetailsDTO quizDetails = quizService.getQuizDetails(quizId);
-
             if (quizDetails == null) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Quiz not found");
+                throw new QuizNotFoundException("Quiz details not found for ID: " + quizId);
             }
 
             return ResponseEntity.ok(quizDetails);
+        } catch (QuizNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        } catch (UnauthorizedActionException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error fetching quiz details: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error fetching quiz details");
         }
     }
 
     // Submit a quiz
     @PostMapping("/submit")
-    public ResponseEntity<?> submitQuiz(@RequestHeader("Authorization") String token, @RequestBody SubmitQuizRequest submissionRequest) {
+    public ResponseEntity<Object> submitQuiz(@RequestHeader("Authorization") String token, @RequestBody SubmitQuizRequest submissionRequest) {
         String role = jwtConfig.getRoleFromToken(token);
         Long studentId = jwtConfig.getUserIdFromToken(token);
 
-        if (!"STUDENT".equals(role)) {
+        if (!Constants.ROLE_STUDENT.equals(role)) {
             return new ResponseEntity<>("Unauthorized", HttpStatus.FORBIDDEN);
         }
         boolean enrolled = courseService.isEnrolled(quizService.getById(submissionRequest.getQuizId()).getCourse().getId(), studentId);
@@ -148,9 +161,16 @@ public class QuizController {
         try {
             QuizAttempt attempt = quizService.submitQuiz(submissionRequest);
             return ResponseEntity.ok("Score: " + attempt.getScore());
-        }
-        catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("error: " + e.getMessage());
+        } catch (QuizNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Quiz not found: " + e.getMessage());
+        } catch (UnauthorizedActionException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Unauthorized: " + e.getMessage());
+        } catch (InvalidQuizSubmissionException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid quiz submission: " + e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error submitting quiz");
         }
     }
 }
+
+
