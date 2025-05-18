@@ -179,4 +179,27 @@ public class QuizService {
     {
         return quizRepository.findById(quizId).orElse(null);
     }
+
+
+
+    public void autoSaveQuiz(SubmitQuizRequest autoSaveRequest) {
+        Long quizId = autoSaveRequest.getQuizId();
+        Long studentId = autoSaveRequest.getStudentId();
+
+        // 1. Retrieve existing attempt or create a new draft attempt
+        QuizAttempt attempt = quizAttemptRepository
+                .findByQuizIdAndStudentId(quizId, studentId)
+                .orElseGet(() -> {
+                    QuizAttempt newAttempt = new QuizAttempt();
+                    newAttempt.setQuiz(quizRepository.findById(quizId).orElseThrow(() -> new RuntimeException("Quiz not found")));
+                    newAttempt.setStudent(userRepository.findById(studentId).orElseThrow(() -> new RuntimeException("Student not found")));
+                    newAttempt.setSubmitted(false);
+                    return newAttempt;
+                });
+
+        // 2. Save progress (answers) — assuming a map of questionId -> answer is passed in SubmitQuizRequest
+        attempt.setAnswers(autoSaveRequest.getAnswers());  // Or however your answers are structured
+        quizAttemptRepository.save(attempt);
+    }
+
 }
