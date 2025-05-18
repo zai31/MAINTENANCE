@@ -8,6 +8,7 @@ public class Constants {
     public static final String ROLE_ADMIN = "ADMIN";
     public static final String UNAUTHORIZED = "Unauthorized";
     public static final String UNAUTHORIZED_COURSE_ACCESS = "Unauthorized: You do not own this course";
+    public static final String UNAUTHORIZED_MESSAGE = "Unauthorized";
 
 }
 

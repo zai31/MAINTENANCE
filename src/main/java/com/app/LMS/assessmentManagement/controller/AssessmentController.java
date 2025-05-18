@@ -10,9 +10,7 @@ import com.app.LMS.courseManagement.service.CourseService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/assessment")
@@ -29,9 +27,9 @@ public class AssessmentController {
     }
 
     @GetMapping("")
-    public ResponseEntity<?> getStudentPerformance(@RequestHeader("Authorization") String token,
-                                                   @RequestParam Long studentId,
-                                                   @RequestParam Long courseId) {
+    public ResponseEntity<PerformanceResponseDTO> getStudentPerformance(@RequestHeader("Authorization") String token,
+                                                                        @RequestParam Long studentId,
+                                                                        @RequestParam Long courseId) {
         String role = jwtConfig.getRoleFromToken(token);
         Long instructorId = jwtConfig.getUserIdFromToken(token);
 
@@ -46,7 +44,5 @@ public class AssessmentController {
 
         PerformanceResponseDTO response = new PerformanceResponseDTO(quizAttempts, feedbacks);
         return ResponseEntity.ok(response);
-
     }
-
 }

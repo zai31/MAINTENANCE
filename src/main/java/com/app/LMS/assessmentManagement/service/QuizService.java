@@ -28,6 +28,7 @@ public class QuizService {
     private final UserRepository userRepository;
     private final QuestionRepository questionRepository;
     private final QuizAttemptRepository quizAttemptRepository;
+    private static final String QUIZ_NOT_FOUND_MESSAGE = "Quiz not found with ID: ";
 
     QuizService(QuizRepository quizRepository, QuestionBankRepository questionBankRepository, CourseService courseService, UserRepository userRepository, QuestionRepository questionRepository, QuizAttemptRepository quizAttemptRepository) {
         this.quizRepository = quizRepository;
@@ -63,8 +64,7 @@ public class QuizService {
     // Update quiz details
     public Quiz updateQuiz(Long id, QuizRequest quizDetails) {
         Quiz existingQuiz = quizRepository.findById(id)
-            .orElseThrow(() -> new dedicatedException.QuizNotFoundException("Quiz not found with ID: " + id));
-        existingQuiz.setTitle(quizDetails.getTitle());
+                .orElseThrow(() -> new dedicatedException.QuizNotFoundException(QUIZ_NOT_FOUND_MESSAGE + id));        existingQuiz.setTitle(quizDetails.getTitle());
         existingQuiz.setStartDate(quizDetails.getStartDate());
         existingQuiz.setDurationInMinutes(quizDetails.getDuration());
         return quizRepository.save(existingQuiz);
@@ -73,16 +73,14 @@ public class QuizService {
     // Add questions to an existing quiz
     public Quiz addQuestionsToQuiz(Long quizId, List<Question> questions) {
         Quiz quiz = quizRepository.findById(quizId)
-            .orElseThrow(() -> new dedicatedException.QuizNotFoundException("Quiz not found with ID: " + quizId));
-        quiz.getQuestions().addAll(questions);
+                .orElseThrow(() -> new dedicatedException.QuizNotFoundException(QUIZ_NOT_FOUND_MESSAGE + quizId));        quiz.getQuestions().addAll(questions);
         return quizRepository.save(quiz);
     }
 
     // Remove a question from an existing quiz
     public boolean removeQuestionFromQuiz(Long quizId, Long questionId) {
         Quiz quiz = quizRepository.findById(quizId)
-            .orElseThrow(() -> new dedicatedException.QuizNotFoundException("Quiz not found with ID: " + quizId));
-        boolean removed = quiz.getQuestions().removeIf(question -> question.getId().equals(questionId));
+                .orElseThrow(() -> new dedicatedException.QuizNotFoundException(QUIZ_NOT_FOUND_MESSAGE + quizId));        boolean removed = quiz.getQuestions().removeIf(question -> question.getId().equals(questionId));
         if (removed) {
             quizRepository.save(quiz);
         }
@@ -104,8 +102,7 @@ public class QuizService {
 
     public QuizAttempt submitQuiz(SubmitQuizRequest request){
         Quiz quiz = quizRepository.findById(request.getQuizId())
-            .orElseThrow(() -> new dedicatedException.QuizNotFoundException("Quiz not found with ID: " + request.getQuizId()));
-        User student = userRepository.findById(request.getStudentId())
+                .orElseThrow(() -> new dedicatedException.QuizNotFoundException(QUIZ_NOT_FOUND_MESSAGE + request.getQuizId()));        User student = userRepository.findById(request.getStudentId())
             .orElseThrow(() -> new dedicatedException.UserNotFoundException("Student not found with ID: " + request.getStudentId()));
         if(quizAttemptRepository.existsByStudentIdAndQuizId(student.getId(), quiz.getId())){
             throw new dedicatedException.InvalidQuizSubmissionException("Student has already submitted this quiz");
@@ -147,8 +144,7 @@ public class QuizService {
     public QuizDetailsDTO getQuizDetails(Long quizId) {
         // Fetch the quiz by its ID
         Quiz quiz = quizRepository.findById(quizId)
-                .orElseThrow(() -> new dedicatedException.QuizNotFoundException("Quiz not found with ID: " + quizId));
-
+                .orElseThrow(() -> new dedicatedException.QuizNotFoundException(QUIZ_NOT_FOUND_MESSAGE + quizId));
         // Map the quiz questions to QuestionResponseDTO
         List<QuestionResponseDTO> questions = quiz.getQuestions().stream()
                 .map(question -> new QuestionResponseDTO(
@@ -171,7 +167,7 @@ public class QuizService {
 
     public Quiz getById(Long quizId) {
         return quizRepository.findById(quizId)
-            .orElseThrow(() -> new dedicatedException.QuizNotFoundException("Quiz not found with ID: " + quizId));
+                .orElseThrow(() -> new dedicatedException.QuizNotFoundException(QUIZ_NOT_FOUND_MESSAGE + quizId));
     }
 
 
