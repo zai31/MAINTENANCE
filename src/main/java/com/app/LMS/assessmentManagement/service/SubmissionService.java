@@ -6,7 +6,7 @@ import com.app.LMS.assessmentManagement.repository.AssignmentRepository;
 import com.app.LMS.assessmentManagement.repository.SubmissionRepository;
 import com.app.LMS.userManagement.model.User;
 import com.app.LMS.userManagement.repository.UserRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -14,6 +14,9 @@ import java.io.File;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
 
 @Service
 public class SubmissionService {
@@ -39,25 +42,29 @@ public class SubmissionService {
         submission.setStudent(student);
         submission.setSubmittedAt(LocalDateTime.now());
 
-        // Save the submission to generate the submission ID
+
         submission = submissionRepository.save(submission);
 
-        // Define the upload directory
-        String uploadDir = System.getProperty("user.dir") + "/uploads/courses/" + assignment.getCourse().getId() + "/assignments/" + assignment.getId() + "/submissions/" + submission.getId();
-        File directory = new File(uploadDir);
+
+        Path uploadDir = Paths.get(System.getProperty("user.dir"), "uploads", "courses",
+                String.valueOf(assignment.getCourse().getId()), "assignments",
+                String.valueOf(assignment.getId()), "submissions",
+                String.valueOf(submission.getId()));
+
+        File directory = uploadDir.toFile();
         if (!directory.exists()) {
             directory.mkdirs();
         }
 
-        // Save the file
-        String filePath = uploadDir + "/" + file.getOriginalFilename();
-        File destinationFile = new File(filePath);
-        file.transferTo(destinationFile);
 
-        // Update the submission with the file path
-        submission.setFilePath(filePath);
+        Path filePath = uploadDir.resolve(file.getOriginalFilename());
+        file.transferTo(filePath.toFile());
+
+
+        submission.setFilePath(filePath.toString());
         return submissionRepository.save(submission);
     }
+
 
     public List<Submission> getAllSubmissions(Long assignmentId){
         return submissionRepository.findByAssignmentId(assignmentId);
