@@ -1,4 +1,5 @@
 package com.app.LMS;
+
 import com.app.LMS.DTO.SignInRequest;
 import com.app.LMS.DTO.SignupRequest;
 import com.app.LMS.userManagement.controller.UserController;
@@ -20,7 +21,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(UserController.class)
 @AutoConfigureMockMvc(addFilters = false) // Disable security filters for testing
-public class UserControllerTest {
+class UserControllerTest { // <-- Fixed: removed 'public'
 
     @Autowired
     private MockMvc mockMvc;
@@ -50,27 +51,26 @@ public class UserControllerTest {
     }
 
     @Test
-void testSignupSuccess() throws Exception {
-    when(userService.registerUser(any(SignupRequest.class))).thenReturn("User registered successfully");
+    void testSignupSuccess() throws Exception {
+        when(userService.registerUser(any(SignupRequest.class))).thenReturn("User registered successfully");
 
-    mockMvc.perform(post("/api/auth/signup")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content("{\"username\":\"testuser\", \"password\":\"password123\", \"email\":\"test@example.com\", \"role\":\"INSTRUCTOR\", \"firstName\":\"John\", \"lastName\":\"Doe\"}"))
-            .andExpect(status().isCreated())
-            .andExpect(content().string("User registered successfully"));
-}
+        mockMvc.perform(post("/api/auth/signup")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"username\":\"testuser\", \"password\":\"password123\", \"email\":\"test@example.com\", \"role\":\"INSTRUCTOR\", \"firstName\":\"John\", \"lastName\":\"Doe\"}"))
+                .andExpect(status().isCreated())
+                .andExpect(content().string("User registered successfully"));
+    }
 
-@Test
-void testSignupFailure() throws Exception {
-    when(userService.registerUser(any(SignupRequest.class))).thenReturn("Username already exists");
+    @Test
+    void testSignupFailure() throws Exception {
+        when(userService.registerUser(any(SignupRequest.class))).thenReturn("Username already exists");
 
-    mockMvc.perform(post("/api/auth/signup")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content("{\"username\":\"testuser\", \"password\":\"password123\", \"email\":\"test@example.com\", \"role\":\"INSTRUCTOR\", \"firstName\":\"John\", \"lastName\":\"Doe\"}"))
-            .andExpect(status().isBadRequest())
-            .andExpect(content().string("Username already exists"));
-}
-
+        mockMvc.perform(post("/api/auth/signup")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"username\":\"testuser\", \"password\":\"password123\", \"email\":\"test@example.com\", \"role\":\"INSTRUCTOR\", \"firstName\":\"John\", \"lastName\":\"Doe\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().string("Username already exists"));
+    }
 
     @Test
     void testSignInSuccess() throws Exception {
@@ -82,7 +82,6 @@ void testSignupFailure() throws Exception {
                 .andExpect(status().isOk())
                 .andExpect(content().string("jwt-token"));
     }
-    
 
     @Test
     void testSignupValidationFailure() throws Exception {

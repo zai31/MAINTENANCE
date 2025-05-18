@@ -171,6 +171,37 @@ public class QuizController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error submitting quiz");
         }
     }
+    // Auto-save quiz progress
+    @PostMapping("/autosave")
+    public ResponseEntity<?> autoSaveQuiz(@RequestHeader("Authorization") String token,
+                                          @RequestBody SubmitQuizRequest autoSaveRequest) {
+        String role = jwtConfig.getRoleFromToken(token);
+        Long studentId = jwtConfig.getUserIdFromToken(token);
+
+        if (!"STUDENT".equals(role)) {
+            return new ResponseEntity<>("Unauthorized", HttpStatus.FORBIDDEN);
+        }
+
+        boolean enrolled = courseService.isEnrolled(
+                quizService.getById(autoSaveRequest.getQuizId()).getCourse().getId(),
+                studentId);
+
+        if (!enrolled) {
+            return ResponseEntity.status(403).body("You must be enrolled in the course to save your progress.");
+        }
+
+        autoSaveRequest.setStudentId(studentId);
+        autoSaveRequest.setAutoSave(true);
+
+        try {
+            quizService.autoSaveQuiz(autoSaveRequest);  // implement this in QuizService
+            return ResponseEntity.ok("Progress auto-saved successfully.");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Auto-save failed: " + e.getMessage());
+        }
+    }
+
 }
 
 

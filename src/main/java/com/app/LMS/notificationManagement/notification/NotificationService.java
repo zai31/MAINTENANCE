@@ -47,6 +47,7 @@ public class NotificationService {
             }
         });
 
+
         return notifications.stream()
                 .map(notification -> new NotificationDTO(notification.getMessage()))
                 .collect(Collectors.toList());
