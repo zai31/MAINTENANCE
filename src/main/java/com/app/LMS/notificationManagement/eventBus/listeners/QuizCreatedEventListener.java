@@ -3,7 +3,6 @@ package com.app.LMS.notificationManagement.eventBus.listeners;
 import com.app.LMS.DTO.StudentInfoDTO;
 import com.app.LMS.assessmentManagement.model.Quiz;
 import com.app.LMS.assessmentManagement.service.QuizService;
-import com.app.LMS.courseManagement.model.Course;
 import com.app.LMS.courseManagement.service.CourseService;
 import com.app.LMS.notificationManagement.eventBus.EventListener;
 import com.app.LMS.notificationManagement.eventBus.events.QuizCreatedEvent;

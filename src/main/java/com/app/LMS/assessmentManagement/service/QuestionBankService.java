@@ -13,12 +13,10 @@ import java.util.List;
 public class QuestionBankService {
     private final QuestionBankRepository questionBankRepository;
     private final CourseService courseService;
-    private final QuestionRepository questionRepository;
 
     QuestionBankService(QuestionBankRepository questionBankRepository, CourseService courseService, QuestionRepository questionRepository) {
         this.questionBankRepository = questionBankRepository;
         this.courseService = courseService;
-        this.questionRepository = questionRepository;
     }
 
     public void addQuestionToBank(Long courseId, Question question) {

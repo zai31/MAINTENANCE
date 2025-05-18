@@ -1,6 +1,7 @@
 package com.app.LMS.assessmentManagement.controller;
 
 import com.app.LMS.DTO.FeedbackDTO;
+import com.app.LMS.DTO.PerformanceResponseDTO;
 import com.app.LMS.common.Constants;
 import com.app.LMS.DTO.QuizAttemptDTO;
 import com.app.LMS.assessmentManagement.service.PerformanceService;
@@ -34,22 +35,18 @@ public class AssessmentController {
         String role = jwtConfig.getRoleFromToken(token);
         Long instructorId = jwtConfig.getUserIdFromToken(token);
 
-        // Combine the role and ownership checks into one condition
         if (!Constants.ROLE_ADMIN.equals(role) &&
                 (Constants.ROLE_INSTRUCTOR.equals(role) &&
                         !courseService.findCourseById(courseId).getInstructor().getId().equals(instructorId))) {
-
-            return new ResponseEntity<>("You are not authorized to access this resource", HttpStatus.FORBIDDEN);
+            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
         }
 
         List<QuizAttemptDTO> quizAttempts = performanceService.getQuizAttemptsByStudentId(studentId, courseId);
         List<FeedbackDTO> feedbacks = performanceService.getFeedbacksByStudentId(studentId, courseId);
 
-        Map<String, Object> response = new HashMap<>();
-        response.put("Quiz attempts", quizAttempts);
-        response.put("Feedbacks", feedbacks);
-
+        PerformanceResponseDTO response = new PerformanceResponseDTO(quizAttempts, feedbacks);
         return ResponseEntity.ok(response);
+
     }
 
 }

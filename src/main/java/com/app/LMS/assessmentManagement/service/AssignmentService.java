@@ -1,10 +1,8 @@
 package com.app.LMS.assessmentManagement.service;
 
 import com.app.LMS.assessmentManagement.model.Assignment;
-import com.app.LMS.assessmentManagement.model.Submission;
 import com.app.LMS.assessmentManagement.repository.AssignmentRepository;
-import com.app.LMS.assessmentManagement.repository.SubmissionRepository;
-import com.app.LMS.common.Exceptions.FileStorageException;
+import com.app.LMS.common.Exceptions.dedicatedException;
 import com.app.LMS.courseManagement.model.Course;
 import com.app.LMS.courseManagement.repository.CourseRepository;
 import com.app.LMS.notificationManagement.eventBus.EventBus;
@@ -67,7 +65,7 @@ public class AssignmentService {
         try {
             file.transferTo(new File(filePath));
         } catch (IOException e) {
-            throw new FileStorageException("Failed to save file to path: " + filePath, e);
+            throw new dedicatedException("Failed to save file to path: " + filePath, e);
         }
 
         savedAssignment.setFilePath(filePath);
