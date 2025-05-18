@@ -5,13 +5,7 @@ import java.util.List;
 
 import com.app.LMS.userManagement.model.User;
 
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
+import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 
 @Entity
@@ -22,18 +16,30 @@ public class Course {
     private Long id;
 
     @NotNull
+    @Column(nullable = false)
     private String title;
 
     @NotNull
     private String description;
 
-    private String duration; // duration in hours
+    private String duration;  // duration in hours
 
     @ManyToOne
+    @JoinColumn(name = "instructor_id")
     private User instructor;
 
-@OneToMany(mappedBy = "course", cascade = CascadeType.ALL, orphanRemoval = true)
-private List<Lesson> lessons = new ArrayList<>();
+    @ManyToMany
+    @JoinTable(
+            name = "course_users",
+            joinColumns = @JoinColumn(name = "course_id"),
+            inverseJoinColumns = @JoinColumn(name = "user_id")
+    )
+    private List<User> users;
+
+    @OneToMany(mappedBy = "course", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Lesson> lessons = new ArrayList<>();
+
+    // Getters and Setters
 
     public Long getId() {
         return id;
@@ -75,6 +81,14 @@ private List<Lesson> lessons = new ArrayList<>();
         this.instructor = instructor;
     }
 
+    public List<User> getUsers() {
+        return users;
+    }
+
+    public void setUsers(List<User> users) {
+        this.users = users;
+    }
+
     public List<Lesson> getLessons() {
         return lessons;
     }
@@ -82,10 +96,4 @@ private List<Lesson> lessons = new ArrayList<>();
     public void setLessons(List<Lesson> lessons) {
         this.lessons = lessons;
     }
-
-   /*
-    public void setInstructor(MediaFile orElseThrow) {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }*/
-
 }
