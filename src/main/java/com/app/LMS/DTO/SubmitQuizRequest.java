@@ -25,4 +25,8 @@ public class SubmitQuizRequest {
     public void setStudentId(Long studentId) {
         this.studentId = studentId;
     }
+
+    public void setAutoSave(boolean b) {
+
+    }
 }
