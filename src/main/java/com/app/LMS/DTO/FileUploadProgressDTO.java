@@ -1,4 +1,4 @@
-package app.LMS.dto.upload;
+package com.app.LMS.DTO;
 
 public class FileUploadProgressDTO {
     private String uploadId;

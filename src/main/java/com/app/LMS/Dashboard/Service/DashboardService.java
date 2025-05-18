@@ -1,8 +1,8 @@
-package app.LMS.service;
+package com.app.LMS.Dashboard.Service;
 
-import app.LMS.dto.dashboard.StudentDashboardDTO;
-import app.LMS.dto.dashboard.InstructorDashboardDTO;
-import app.LMS.dto.dashboard.AdminDashboardDTO;
+import com.app.LMS.DTO.StudentDashboardDTO;
+import com.app.LMS.DTO.InstructorDashboardDTO;
+import com.app.LMS.DTO.AdminDashboardDTO;
 
 public interface DashboardService {
     StudentDashboardDTO getStudentDashboard(Long userId);

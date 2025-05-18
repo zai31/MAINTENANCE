@@ -1,7 +1,6 @@
-package app.LMS.service.impl;
+package com.app.LMS.Dashboard.Service;
 
-import app.LMS.dto.dashboard.*;
-import app.LMS.service.DashboardService;
+import com.app.LMS.DTO.*;
 import org.springframework.stereotype.Service;
 import java.util.*;
 
@@ -11,9 +10,9 @@ public class DashboardServiceImpl implements DashboardService {
     @Override
     public StudentDashboardDTO getStudentDashboard(Long userId) {
         StudentDashboardDTO dashboard = new StudentDashboardDTO();
-        
-        // TODO: Implement actual data retrieval from repositories
-        // For now, returning mock data
+
+        // Implement actual data retrieval from repositories but I am returning mock data
+
         List<CourseOverviewDTO> enrolledCourses = new ArrayList<>();
         List<AssignmentDeadlineDTO> upcomingAssignments = new ArrayList<>();
         Map<String, Object> statistics = new HashMap<>();
@@ -28,9 +27,9 @@ public class DashboardServiceImpl implements DashboardService {
     @Override
     public InstructorDashboardDTO getInstructorDashboard(Long userId) {
         InstructorDashboardDTO dashboard = new InstructorDashboardDTO();
-        
-        // TODO: Implement actual data retrieval from repositories
-        // For now, returning mock data
+
+        // Implement actual data retrieval from repositories but I am returning mock data
+
         List<CourseOverviewDTO> teachingCourses = new ArrayList<>();
         List<AssignmentDeadlineDTO> upcomingAssignments = new ArrayList<>();
         List<StudentSubmissionDTO> recentSubmissions = new ArrayList<>();
@@ -47,9 +46,9 @@ public class DashboardServiceImpl implements DashboardService {
     @Override
     public AdminDashboardDTO getAdminDashboard(Long userId) {
         AdminDashboardDTO dashboard = new AdminDashboardDTO();
-        
-        // TODO: Implement actual data retrieval from repositories
-        // For now, returning mock data
+
+        // Implement actual data retrieval from repositories but I am returning mock data
+
         Map<String, Object> platformStats = new HashMap<>();
         List<RecentActivityDTO> recentActivities = new ArrayList<>();
         Map<String, Object> userStats = new HashMap<>();
