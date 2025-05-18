@@ -41,6 +41,20 @@ public class AssignmentController {
         this.courseService = courseService;
         this.eventBus = eventBus;
     }
+    @PostMapping("/test-deadline-reminder")
+    public ResponseEntity<String> testDeadlineReminder(@RequestHeader("Authorization") String token) {
+        String role = jwtConfig.getRoleFromToken(token);
+        if (!Constants.ROLE_INSTRUCTOR.equals(role)) {
+            return new ResponseEntity<>(Constants.UNAUTHORIZED, HttpStatus.FORBIDDEN);
+        }
+
+        try {
+            assignmentService.checkAssignmentDeadlines();
+            return new ResponseEntity<>("Deadline reminder check triggered successfully", HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>("Error triggering deadline reminder: " + e.getMessage(), HttpStatus.BAD_REQUEST);
+        }
+    }
 
     @PostMapping(value = "/create", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<String> createAssignment(
