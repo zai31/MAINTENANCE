@@ -1,5 +1,6 @@
 package com.app.LMS.assessmentManagement.model;
 
+import com.app.LMS.DTO.AnswerRequest;
 import com.app.LMS.userManagement.model.User;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
@@ -28,6 +29,7 @@ public class QuizAttempt {
 
     @OneToMany(mappedBy = "quizAttempt")
     private List<Answer> questionAnswers;  // List of answers the student submitted for each question in the quiz
+    private String answersJson;
 
     // Getters and Setters
     public Long getId() {
@@ -76,5 +78,27 @@ public class QuizAttempt {
 
     public void setQuestionAnswers(List<Answer> questionAnswers) {
         this.questionAnswers = questionAnswers;
+    }
+    private boolean isAutoSave = false;
+
+    public boolean isAutoSave() {
+        return isAutoSave;
+    }
+
+    public void setAutoSave(boolean autoSave) {
+        this.isAutoSave = autoSave;
+    }
+    private boolean submitted = false;
+
+    public boolean isSubmitted() {
+        return submitted;
+    }
+
+    public void setSubmitted(boolean submitted) {
+        this.submitted = submitted;
+    }
+
+    public void setAnswers(List<AnswerRequest> answers) {
+        this.answersJson = answersJson;
     }
 }
