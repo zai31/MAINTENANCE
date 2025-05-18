@@ -1,9 +1,9 @@
-package app.LMS.controller;
+package com.app.LMS.Dashboard.Controller;
 
-import app.LMS.dto.dashboard.StudentDashboardDTO;
-import app.LMS.dto.dashboard.InstructorDashboardDTO;
-import app.LMS.dto.dashboard.AdminDashboardDTO;
-import app.LMS.service.DashboardService;
+import com.app.LMS.DTO.StudentDashboardDTO;
+import com.app.LMS.DTO.InstructorDashboardDTO;
+import com.app.LMS.DTO.AdminDashboardDTO;
+import com.app.LMS.Dashboard.Service.DashboardService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;

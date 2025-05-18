@@ -1,4 +1,4 @@
-package app.LMS.dto.dashboard;
+package com.app.LMS.DTO;
 
 public class CourseOverviewDTO {
     private Long courseId;

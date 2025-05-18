@@ -1,6 +1,6 @@
-package app.LMS.service;
+package com.app.LMS.FileUpload.Service;
 
-import app.LMS.dto.upload.FileUploadProgressDTO;
+import com.app.LMS.DTO.FileUploadProgressDTO;
 import org.springframework.web.multipart.MultipartFile;
 
 public interface FileUploadService {
