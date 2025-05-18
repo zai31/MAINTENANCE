@@ -1,7 +1,6 @@
-package app.LMS.service.impl;
+package com.app.LMS.FileUpload.Service;
 
-import app.LMS.dto.upload.FileUploadProgressDTO;
-import app.LMS.service.FileUploadService;
+import com.app.LMS.DTO.FileUploadProgressDTO;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import java.util.Map;

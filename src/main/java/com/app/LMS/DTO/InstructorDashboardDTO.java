@@ -1,20 +1,21 @@
-package app.LMS.dto.dashboard;
+package com.app.LMS.DTO;
 
 import java.util.List;
 import java.util.Map;
 
-public class StudentDashboardDTO {
-    private List<CourseOverviewDTO> enrolledCourses;
+public class InstructorDashboardDTO {
+    private List<CourseOverviewDTO> teachingCourses;
     private List<AssignmentDeadlineDTO> upcomingAssignments;
+    private List<StudentSubmissionDTO> recentSubmissions;
     private Map<String, Object> statistics;
 
     // Getters and Setters
-    public List<CourseOverviewDTO> getEnrolledCourses() {
-        return enrolledCourses;
+    public List<CourseOverviewDTO> getTeachingCourses() {
+        return teachingCourses;
     }
 
-    public void setEnrolledCourses(List<CourseOverviewDTO> enrolledCourses) {
-        this.enrolledCourses = enrolledCourses;
+    public void setTeachingCourses(List<CourseOverviewDTO> teachingCourses) {
+        this.teachingCourses = teachingCourses;
     }
 
     public List<AssignmentDeadlineDTO> getUpcomingAssignments() {
@@ -23,6 +24,14 @@ public class StudentDashboardDTO {
 
     public void setUpcomingAssignments(List<AssignmentDeadlineDTO> upcomingAssignments) {
         this.upcomingAssignments = upcomingAssignments;
+    }
+
+    public List<StudentSubmissionDTO> getRecentSubmissions() {
+        return recentSubmissions;
+    }
+
+    public void setRecentSubmissions(List<StudentSubmissionDTO> recentSubmissions) {
+        this.recentSubmissions = recentSubmissions;
     }
 
     public Map<String, Object> getStatistics() {

@@ -1,7 +1,7 @@
-package app.LMS.controller;
+package com.app.LMS.FileUpload.Controller;
 
-import app.LMS.dto.upload.FileUploadProgressDTO;
-import app.LMS.service.FileUploadService;
+import com.app.LMS.DTO.FileUploadProgressDTO;
+import com.app.LMS.FileUpload.Service.FileUploadService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
