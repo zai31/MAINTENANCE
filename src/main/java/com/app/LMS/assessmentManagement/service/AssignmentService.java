@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.util.List;
 
 @Service
+@org.springframework.context.annotation.Lazy
 public class AssignmentService {
 
     private final AssignmentRepository assignmentRepository;
@@ -27,7 +28,7 @@ public class AssignmentService {
     private final EventBus eventBus;
 
 
-    public AssignmentService(AssignmentRepository assignmentRepository, CourseRepository courseRepository, EventBus eventBus) {
+    public AssignmentService(AssignmentRepository assignmentRepository, CourseRepository courseRepository, @org.springframework.context.annotation.Lazy EventBus eventBus) {
         this.assignmentRepository = assignmentRepository;
         this.courseRepository = courseRepository;
         this.eventBus = eventBus;

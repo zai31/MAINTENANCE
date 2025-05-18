@@ -4,11 +4,15 @@ import com.app.LMS.courseManagement.model.Course;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.NotNull;
+import org.hibernate.search.mapper.pojo.mapping.definition.annotation.FullTextField;
+import org.hibernate.search.mapper.pojo.mapping.definition.annotation.Indexed;
+import org.hibernate.search.mapper.pojo.mapping.definition.annotation.IndexedEmbedded;
 
 import java.util.Date;
 import java.util.List;
 
 @Entity
+@Indexed(index = "quiz")
 public class Quiz {
 
     @Id
@@ -16,6 +20,7 @@ public class Quiz {
     private Long id;
 
     @NotNull
+    @FullTextField(analyzer = "english")
     private String title;
 
     @NotNull
@@ -26,6 +31,7 @@ public class Quiz {
 
     @NotNull
     @ManyToOne
+    @IndexedEmbedded
     private Course course;
 
     @OneToMany
