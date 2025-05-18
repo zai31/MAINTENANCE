@@ -24,6 +24,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/assignment")
+@org.springframework.context.annotation.Lazy
 public class AssignmentController {
 
     private final AssignmentService assignmentService;
@@ -33,7 +34,7 @@ public class AssignmentController {
     private final EventBus eventBus;
     private final CourseService courseService;
 
-    public AssignmentController(AssignmentService assignmentService, JwtConfig jwtConfig, SubmissionService submissionService, FeedbackService feedbackService, EventBus eventBus, CourseService courseService) {
+    public AssignmentController(AssignmentService assignmentService, JwtConfig jwtConfig, SubmissionService submissionService, FeedbackService feedbackService, @org.springframework.context.annotation.Lazy EventBus eventBus, CourseService courseService) {
         this.assignmentService = assignmentService;
         this.jwtConfig = jwtConfig;
         this.submissionService = submissionService;
